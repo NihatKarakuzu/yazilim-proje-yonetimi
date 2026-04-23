@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+
+# Build / tooling
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data and models (keep local, do not commit large files)
+data/
+dataset/
+models/
+artifacts/
+*.pt
+*.pth
+*.onnx
+*.h5
+*.ckpt
+
+# Upload outputs
+uploads/
+results/

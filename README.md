@@ -30,9 +30,9 @@ Sistem, yüklenen görseller için karşılaştırma/tespit sonuçlarını üret
 
 ## Ekip
 
-- `NihatKarakuzu`
-- `ozkn-sefa`
-- `Mert-exe`
+- Nihat Karakuzu (`@NihatKarakuzu`)
+- Sefa Özkan (`@ozkn-sefa`)
+- Mert Evran (`@Mert-exe`)
 
 ## Geliştirme Aşamaları
 

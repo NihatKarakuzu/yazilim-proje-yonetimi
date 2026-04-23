@@ -71,3 +71,13 @@ uvicorn app.main:app --reload
 
 Varsayılan adres: `http://127.0.0.1:8000`  
 Dokümantasyon: `http://127.0.0.1:8000/docs`
+
+## Klasik Analiz (2. Aşama)
+
+Bu aşamada ORB tabanlı karşılaştırma endpointi eklendi:
+
+- `POST /api/analyze/orb`
+  - `reference_image`: referans görsel
+  - `test_image`: analiz edilecek görsel
+
+Yanıt içinde karar (`authentic_like` veya `suspicious`) ve eşleşme metrikleri döner.

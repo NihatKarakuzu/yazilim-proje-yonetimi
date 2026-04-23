@@ -18,7 +18,7 @@ def _decode_image(raw_bytes: bytes, filename: str) -> np.ndarray:
     array = np.frombuffer(raw_bytes, dtype=np.uint8)
     image = cv2.imdecode(array, cv2.IMREAD_GRAYSCALE)
     if image is None:
-        raise ValueError(f"'{filename}' gecerli bir goruntu dosyasi degil.")
+        raise ValueError(f"'{filename}' geçerli bir görüntü dosyası değil.")
     return image
 
 
@@ -42,24 +42,24 @@ def _analyze_with_detector(
         matcher_norm = cv2.NORM_HAMMING
     elif detector_name == "SIFT":
         if not hasattr(cv2, "SIFT_create"):
-            raise ValueError("Bu OpenCV surumunde SIFT destegi bulunamadi.")
+            raise ValueError("Bu OpenCV sürümünde SIFT desteği bulunamadı.")
         detector = cv2.SIFT_create(nfeatures=1200)
         distance_limit = 250
         matcher_norm = cv2.NORM_L2
     else:
-        raise ValueError("Bilinmeyen algoritma secimi.")
+        raise ValueError("Bilinmeyen algoritma seçimi.")
 
     keypoints_a, descriptors_a = detector.detectAndCompute(image_a, None)
     keypoints_b, descriptors_b = detector.detectAndCompute(image_b, None)
 
     if descriptors_a is None or descriptors_b is None:
-        raise ValueError("Goruntulerde yeterli ozellik noktasi bulunamadi.")
+        raise ValueError("Görüntülerde yeterli özellik noktası bulunamadı.")
 
     matcher = cv2.BFMatcher(matcher_norm, crossCheck=True)
     matches = matcher.match(descriptors_a, descriptors_b)
 
     if not matches:
-        raise ValueError("Goruntuler arasinda eslesme bulunamadi.")
+        raise ValueError("Görüntüler arasında eşleşme bulunamadı.")
 
     good_matches = [m for m in matches if m.distance < distance_limit]
     similarity_score = len(good_matches) / max(len(matches), 1)

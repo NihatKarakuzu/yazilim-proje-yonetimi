@@ -11,7 +11,7 @@ router = APIRouter(tags=["Upload"])
 @router.post("/upload")
 def upload_image(file: UploadFile = File(...)) -> dict[str, str | int]:
     if not file.filename:
-        raise HTTPException(status_code=400, detail="Dosya adi bos olamaz.")
+        raise HTTPException(status_code=400, detail="Dosya adı boş olamaz.")
 
     try:
         saved_path = save_upload_file(file)
@@ -20,7 +20,7 @@ def upload_image(file: UploadFile = File(...)) -> dict[str, str | int]:
 
     file_size = Path(saved_path).stat().st_size
     return {
-        "message": "Dosya basariyla yuklendi.",
+        "message": "Dosya başarıyla yüklendi.",
         "filename": saved_path.name,
         "path": str(saved_path),
         "size_bytes": file_size,

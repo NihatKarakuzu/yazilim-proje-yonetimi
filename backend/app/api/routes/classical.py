@@ -31,7 +31,7 @@ def analyze_orb(
     test_image: UploadFile = File(...),
 ) -> dict:
     if not reference_image.filename or not test_image.filename:
-        raise HTTPException(status_code=400, detail="Iki dosya da gonderilmelidir.")
+        raise HTTPException(status_code=400, detail="İki dosya da gönderilmelidir.")
 
     reference_bytes = reference_image.file.read()
     test_bytes = test_image.file.read()
@@ -55,7 +55,7 @@ def analyze_classical(
     test_image: UploadFile = File(...),
 ) -> dict:
     if not reference_image.filename or not test_image.filename:
-        raise HTTPException(status_code=400, detail="Iki dosya da gonderilmelidir.")
+        raise HTTPException(status_code=400, detail="İki dosya da gönderilmelidir.")
 
     reference_bytes = reference_image.file.read()
     test_bytes = test_image.file.read()

@@ -83,3 +83,13 @@ Bu aşamada klasik algoritmalar genişletildi:
 - `POST /api/analyze/classical`
   - ORB + AKAZE + SIFT sonuçlarını tek yanıtta döner
   - her algoritma için karar (`authentic_like` veya `suspicious`) ve metrik üretir
+
+## AI Analiz (3. Aşama - İlk Prototip)
+
+Bu aşamada AI katmanı için ilk çalışan prototip endpointi eklendi:
+
+- `POST /api/analyze/ai`
+  - tek görsel alır ve iki farklı model yaklaşımından skor üretir
+  - model çıktılarının ortalaması ile birleşik karar döner
+
+Not: Bu sürüm, gerçek model eğitimi öncesi çalışan prototip akıştır. Sonraki adımda eğitimli CNN/LSTM modelleri entegre edilecektir.

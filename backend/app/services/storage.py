@@ -17,7 +17,7 @@ def validate_extension(filename: str) -> str:
     extension = Path(filename).suffix.lower()
     if extension not in ALLOWED_EXTENSIONS:
         raise ValueError(
-            "Desteklenmeyen dosya uzantisi. Izin verilenler: "
+            "Desteklenmeyen dosya uzantısı. İzin verilenler: "
             + ", ".join(sorted(ALLOWED_EXTENSIONS))
         )
     return extension

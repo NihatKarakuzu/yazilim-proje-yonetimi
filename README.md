@@ -1,26 +1,55 @@
-# Yazilim Proje Yonetimi
+# Yazılım Proje Yönetimi
 
-Bu depo, "Goruntunun Degistirilip Degistirilmediginin Tespiti" konulu donem projesi icin olusturuldu.
+Bu depo, dönem projesi kapsamında geliştirilecek **görüntü sahteciliği tespit sistemi** için hazırlanmıştır.
+Amaç, klasik görüntü işleme yöntemleri ve yapay zeka yaklaşımları ile bir görselin değiştirilip değiştirilmediğini analiz etmektir.
 
-## Proje Hedefi
+## Proje Özeti
 
-- Klasik goruntu algoritmalari ile (SIFT, SURF, AKAZE, ORB) degisim analizi yapmak
-- AI tabanli yontemlerle goruntu sahteciligi tespiti yapmak
-- Sonuclari raporlanabilir ve sunulabilir bir sistemde gostermek
+Proje iki ana analiz katmanından oluşur:
 
-## Takim
+- **Klasik Yöntemler:** SIFT, SURF, AKAZE, ORB
+- **Yapay Zeka Yöntemleri:** CNN tabanlı modeller ve ek AI yaklaşımı
 
+Sistem, yüklenen görseller için karşılaştırma/tespit sonuçlarını üretir, raporlanabilir bir çıktıya dönüştürür ve sunuma uygun biçimde gösterir.
+
+## Temel Hedefler
+
+- Görsel yükleme ve analiz akışını uçtan uca çalıştırmak
+- Klasik algoritmalarla özellik eşleştirme tabanlı sahtecilik tespiti yapmak
+- AI modelleri ile sahtecilik olasılığı üretmek
+- Sonuçları anlaşılır bir arayüzde sunmak
+- Projeyi ekip çalışmasına uygun, versiyon kontrollü ve düzenli bir yapıda yönetmek
+
+## Teknoloji Planı
+
+- **Backend:** Python + FastAPI
+- **Görüntü İşleme:** OpenCV
+- **Yapay Zeka:** PyTorch (veya TensorFlow)
+- **Veritabanı (opsiyonel ama önerilir):** PostgreSQL
+- **Sürüm Kontrol:** Git + GitHub
+
+## Ekip
+
+- `NihatKarakuzu`
 - `ozkn-sefa`
 - `Mert-exe`
 
-## Baslangic Plani
+## Geliştirme Aşamaları
 
-1. Backend API (yukleme + analiz endpointleri)
-2. Klasik algoritmalarin entegrasyonu
-3. AI model pipeline (egitim + inference)
-4. Sonuclarin kaydi (opsiyonel PostgreSQL)
-5. UI/UX ve teslim dokumanlari
+1. Proje iskeleti, ortam kurulumu ve temel API
+2. Klasik algoritmaların entegrasyonu (ORB -> AKAZE -> SIFT/SURF)
+3. AI model eğitimi ve inference hattı
+4. Sonuçların kayıt altına alınması ve raporlama
+5. Arayüz iyileştirmeleri ve teslim dokümantasyonu
 
-## Ilk Kurulum (taslak)
+## Git Çalışma Düzeni
 
-Bu repo asamali olarak doldurulacaktir. Ilk asamada iskelet ve gorev plani olusturulmustur.
+- Ana dal: `main`
+- Geliştirme dalları:
+  - `feature/backend-api`
+  - `feature/opencv-classical`
+  - `feature/ai-model`
+  - `feature/frontend-ui`
+  - `docs/user-manual`
+
+Her geliştirme adımı küçük ve anlamlı commitlerle ilerletilir; düzenli push ve gerektiğinde PR akışı kullanılır.

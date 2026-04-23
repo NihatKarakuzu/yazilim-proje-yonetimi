@@ -1,6 +1,6 @@
 # Yazılım Proje Yönetimi
 
-Bu depo, dönem projesi kapsamında geliştirilecek **görüntü sahteciliği tespit sistemi** için hazırlanmıştır.
+Bu depo, dönem projesi kapsamında geliştirilecek görüntü sahteciliği tespit sistemi için hazırlanmıştır.
 Amaç, klasik görüntü işleme yöntemleri ve yapay zeka yaklaşımları ile bir görselin değiştirilip değiştirilmediğini analiz etmektir.
 
 ## Proje Özeti
@@ -53,3 +53,21 @@ Sistem, yüklenen görseller için karşılaştırma/tespit sonuçlarını üret
   - `docs/user-manual`
 
 Her geliştirme adımı küçük ve anlamlı commitlerle ilerletilir; düzenli push ve gerektiğinde PR akışı kullanılır.
+
+## İlk Çalışan Sürüm (Backend API)
+
+Bu aşamada temel backend API altyapısı kurulmuştur:
+
+- `GET /api/health` -> servis durumunu döner
+- `POST /api/upload` -> desteklenen görsel dosyasını yükler
+
+### Çalıştırma
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+Varsayılan adres: `http://127.0.0.1:8000`  
+Dokümantasyon: `http://127.0.0.1:8000/docs`

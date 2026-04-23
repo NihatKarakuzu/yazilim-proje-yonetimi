@@ -121,7 +121,7 @@ Model durumunu kontrol etmek için:
 
 ### CNN Eğitim ve ONNX Export
 
-Eğitim için veri setini `dataset/README.md` içinde verilen yapıda hazırlayın.
+Eğitim için veri setini `docs/dataset-structure.md` içinde verilen yapıda hazırlayın.
 
 Komut:
 

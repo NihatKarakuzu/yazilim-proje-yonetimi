@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -9,6 +10,14 @@ class AiAnalysisResult:
     model: str
     fake_probability: float
     decision: str
+
+
+@dataclass
+class AiAnalysisBundle:
+    model_results: list[AiAnalysisResult]
+    ensemble_probability: float
+    ensemble_decision: str
+    inference_mode: str
 
 
 def _decode_image(raw_bytes: bytes, filename: str) -> np.ndarray:
@@ -26,6 +35,33 @@ def _normalize(value: float, min_value: float, max_value: float) -> float:
 
 def _decision(probability: float) -> str:
     return "suspicious" if probability >= 0.5 else "authentic_like"
+
+
+def _onnx_model_path() -> Path:
+    return Path("models") / "deepfake_detector.onnx"
+
+
+def _onnx_model_exists() -> bool:
+    return _onnx_model_path().is_file()
+
+
+def _prepare_onnx_input(image: np.ndarray) -> np.ndarray:
+    resized = cv2.resize(image, (224, 224), interpolation=cv2.INTER_AREA)
+    normalized = resized.astype(np.float32) / 255.0
+    # NHWC -> NCHW
+    chw = np.transpose(normalized, (2, 0, 1))
+    return np.expand_dims(chw, axis=0)
+
+
+def _onnx_probability(image: np.ndarray) -> float:
+    model_path = _onnx_model_path()
+    net = cv2.dnn.readNetFromONNX(str(model_path))
+    blob = _prepare_onnx_input(image)
+    net.setInput(blob)
+    output = net.forward()
+    value = float(np.squeeze(output))
+    probability = 1.0 / (1.0 + np.exp(-value))
+    return round(float(max(0.0, min(1.0, probability))), 4)
 
 
 def _cnn_proxy_probability(image: np.ndarray) -> float:
@@ -49,11 +85,34 @@ def _frequency_proxy_probability(image: np.ndarray) -> float:
     return round(float(probability), 4)
 
 
-def analyze_ai_models(image_bytes: bytes, filename: str) -> tuple[list[AiAnalysisResult], float, str]:
+def analyze_ai_models(image_bytes: bytes, filename: str) -> AiAnalysisBundle:
     image = _decode_image(image_bytes, filename)
+
+    if _onnx_model_exists():
+        onnx_prob = _onnx_probability(image)
+        freq_prob = _frequency_proxy_probability(image)
+        results = [
+            AiAnalysisResult(
+                model="cnn_onnx_v1",
+                fake_probability=onnx_prob,
+                decision=_decision(onnx_prob),
+            ),
+            AiAnalysisResult(
+                model="frequency_proxy_v1",
+                fake_probability=freq_prob,
+                decision=_decision(freq_prob),
+            ),
+        ]
+        ensemble_probability = round((onnx_prob + freq_prob) / 2.0, 4)
+        return AiAnalysisBundle(
+            model_results=results,
+            ensemble_probability=ensemble_probability,
+            ensemble_decision=_decision(ensemble_probability),
+            inference_mode="onnx+proxy",
+        )
+
     cnn_prob = _cnn_proxy_probability(image)
     freq_prob = _frequency_proxy_probability(image)
-
     results = [
         AiAnalysisResult(
             model="cnn_proxy_v1",
@@ -66,7 +125,19 @@ def analyze_ai_models(image_bytes: bytes, filename: str) -> tuple[list[AiAnalysi
             decision=_decision(freq_prob),
         ),
     ]
-
     ensemble_probability = round((cnn_prob + freq_prob) / 2.0, 4)
-    ensemble_decision = _decision(ensemble_probability)
-    return results, ensemble_probability, ensemble_decision
+    return AiAnalysisBundle(
+        model_results=results,
+        ensemble_probability=ensemble_probability,
+        ensemble_decision=_decision(ensemble_probability),
+        inference_mode="proxy-only",
+    )
+
+
+def ai_model_status() -> dict:
+    model_path = _onnx_model_path()
+    return {
+        "onnx_model_found": _onnx_model_exists(),
+        "expected_model_path": str(model_path),
+        "active_mode": "onnx+proxy" if _onnx_model_exists() else "proxy-only",
+    }

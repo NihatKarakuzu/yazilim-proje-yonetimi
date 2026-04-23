@@ -108,6 +108,17 @@ Bu aşamada AI katmanı için ilk çalışan prototip endpointi eklendi:
 
 Not: Bu sürüm, gerçek model eğitimi öncesi çalışan prototip akıştır. Sonraki adımda eğitimli CNN/LSTM modelleri entegre edilecektir.
 
+### Eğitimli Model Entegrasyonu (ONNX)
+
+Sistem, `models/deepfake_detector.onnx` dosyası varsa otomatik olarak gerçek model ile çalışır.
+
+- Model mevcutsa: `inference_mode = onnx+proxy`
+- Model yoksa: `inference_mode = proxy-only`
+
+Model durumunu kontrol etmek için:
+
+- `GET /api/ai/model-status`
+
 ## Sonuç Geçmişi
 
 - `GET /api/analysis/history?limit=20`

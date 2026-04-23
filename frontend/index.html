@@ -42,6 +42,7 @@
     <div class="row">
       <input id="aiImage" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" />
       <button onclick="runAi()">AI Analizi Başlat</button>
+      <button onclick="checkAiModel()">Model Durumunu Kontrol Et</button>
     </div>
   </section>
 
@@ -109,6 +110,17 @@
         const res = await fetch("/api/analyze/ai", { method: "POST", body: form });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "AI analiz başarısız.");
+        showResult(data);
+      } catch (e) {
+        showError(e.message);
+      }
+    }
+
+    async function checkAiModel() {
+      try {
+        const res = await fetch("/api/ai/model-status");
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Model durumu alınamadı.");
         showResult(data);
       } catch (e) {
         showError(e.message);

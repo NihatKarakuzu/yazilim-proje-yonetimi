@@ -1,4 +1,4 @@
-# Yazlim Proje Yonetimi
+# Yazilim Proje Yonetimi
 
 Bu depo, "Goruntunun Degistirilip Degistirilmediginin Tespiti" konulu donem projesi icin olusturuldu.
 

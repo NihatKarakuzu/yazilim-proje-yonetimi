@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Görüntü Sahteciliği Tespit Sistemi</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; background: #f7f8fa; color: #111; }
+    h1 { margin-bottom: 8px; }
+    .card { background: #fff; padding: 16px; border-radius: 10px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
+    input[type="file"] { background: #fff; padding: 6px; border: 1px solid #ddd; border-radius: 6px; }
+    button { background: #2563eb; color: white; border: 0; border-radius: 6px; padding: 8px 14px; cursor: pointer; }
+    button:hover { background: #1d4ed8; }
+    pre { background: #0b1020; color: #e2e8f0; padding: 12px; border-radius: 8px; overflow: auto; }
+    .hint { color: #444; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>Görüntü Sahteciliği Tespit Sistemi</h1>
+  <p class="hint">Bu arayüzden API endpointlerini doğrudan test edebilirsin.</p>
+
+  <section class="card">
+    <h3>Görsel Yükleme</h3>
+    <div class="row">
+      <input id="uploadImage" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" />
+      <button onclick="uploadImage()">Yükle</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>Klasik Analiz (ORB + AKAZE + SIFT)</h3>
+    <div class="row">
+      <input id="classicalRef" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" />
+      <input id="classicalTest" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" />
+      <button onclick="runClassical()">Analizi Başlat</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>AI Analiz</h3>
+    <div class="row">
+      <input id="aiImage" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" />
+      <button onclick="runAi()">AI Analizi Başlat</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>Sonuç</h3>
+    <pre id="resultArea">Henüz işlem yapılmadı.</pre>
+  </section>
+
+  <script>
+    const resultArea = document.getElementById("resultArea");
+
+    function showResult(data) {
+      resultArea.textContent = JSON.stringify(data, null, 2);
+    }
+
+    function showError(error) {
+      resultArea.textContent = `Hata: ${error}`;
+    }
+
+    async function uploadImage() {
+      const image = document.getElementById("uploadImage").files[0];
+      if (!image) return showError("Lütfen bir dosya seç.");
+      const form = new FormData();
+      form.append("file", image);
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body: form });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Yükleme başarısız.");
+        showResult(data);
+      } catch (e) {
+        showError(e.message);
+      }
+    }
+
+    async function runClassical() {
+      const reference = document.getElementById("classicalRef").files[0];
+      const test = document.getElementById("classicalTest").files[0];
+      if (!reference || !test) return showError("Lütfen iki görsel de seç.");
+      const form = new FormData();
+      form.append("reference_image", reference);
+      form.append("test_image", test);
+      try {
+        const res = await fetch("/api/analyze/classical", { method: "POST", body: form });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Klasik analiz başarısız.");
+        showResult(data);
+      } catch (e) {
+        showError(e.message);
+      }
+    }
+
+    async function runAi() {
+      const image = document.getElementById("aiImage").files[0];
+      if (!image) return showError("Lütfen bir görsel seç.");
+      const form = new FormData();
+      form.append("image", image);
+      try {
+        const res = await fetch("/api/analyze/ai", { method: "POST", body: form });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "AI analiz başarısız.");
+        showResult(data);
+      } catch (e) {
+        showError(e.message);
+      }
+    }
+  </script>
+</body>
+</html>

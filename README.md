@@ -71,6 +71,7 @@ uvicorn app.main:app --reload
 
 Varsayılan adres: `http://127.0.0.1:8000`  
 Dokümantasyon: `http://127.0.0.1:8000/docs`
+Kullanıcı arayüzü: `http://127.0.0.1:8000/`
 
 ## Klasik Analiz (2. Aşama)
 

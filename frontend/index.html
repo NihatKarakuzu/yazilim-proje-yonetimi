@@ -46,6 +46,13 @@
   </section>
 
   <section class="card">
+    <h3>Analiz Geçmişi (PostgreSQL)</h3>
+    <div class="row">
+      <button onclick="loadHistory()">Geçmişi Getir</button>
+    </div>
+  </section>
+
+  <section class="card">
     <h3>Sonuç</h3>
     <pre id="resultArea">Henüz işlem yapılmadı.</pre>
   </section>
@@ -102,6 +109,17 @@
         const res = await fetch("/api/analyze/ai", { method: "POST", body: form });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "AI analiz başarısız.");
+        showResult(data);
+      } catch (e) {
+        showError(e.message);
+      }
+    }
+
+    async function loadHistory() {
+      try {
+        const res = await fetch("/api/analysis/history?limit=20");
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Geçmiş alınamadı.");
         showResult(data);
       } catch (e) {
         showError(e.message);

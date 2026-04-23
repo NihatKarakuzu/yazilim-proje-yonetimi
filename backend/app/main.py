@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 from app.api.routes.ai import router as ai_router
 from app.api.routes.classical import router as classical_router
 from app.api.routes.health import router as health_router
+from app.api.routes.history import router as history_router
 from app.api.routes.upload import router as upload_router
 
 
@@ -19,6 +20,7 @@ app.include_router(health_router, prefix="/api")
 app.include_router(upload_router, prefix="/api")
 app.include_router(classical_router, prefix="/api")
 app.include_router(ai_router, prefix="/api")
+app.include_router(history_router, prefix="/api")
 
 
 @app.get("/", include_in_schema=False)

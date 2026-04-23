@@ -1,5 +1,6 @@
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
+from app.services.analysis_store import save_analysis_result
 from app.services.ai_analysis import analyze_ai_models
 
 
@@ -22,7 +23,7 @@ def analyze_ai(image: UploadFile = File(...)) -> dict:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    return {
+    response = {
         "filename": image.filename,
         "ensemble": {
             "fake_probability": ensemble_probability,
@@ -37,3 +38,11 @@ def analyze_ai(image: UploadFile = File(...)) -> dict:
             for item in model_results
         ],
     }
+    response["stored_in_db"] = save_analysis_result(
+        analysis_type="ai",
+        payload=response,
+        input_filename=image.filename,
+        decision=ensemble_decision,
+        score=ensemble_probability,
+    )
+    return response

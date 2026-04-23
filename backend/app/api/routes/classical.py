@@ -1,5 +1,6 @@
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
+from app.services.analysis_store import save_analysis_result
 from app.services.classical_analysis import (
     FeatureAnalysisResult,
     analyze_with_akaze,
@@ -46,7 +47,16 @@ def analyze_orb(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    return _serialize_result("ORB", result)
+    response = _serialize_result("ORB", result)
+    response["stored_in_db"] = save_analysis_result(
+        analysis_type="orb",
+        payload=response,
+        input_filename=test_image.filename,
+        reference_filename=reference_image.filename,
+        decision=result.decision,
+        score=result.similarity_score,
+    )
+    return response
 
 
 @router.post("/analyze/classical")
@@ -72,7 +82,7 @@ def analyze_classical(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    return {
+    response = {
         "reference_image": filename_a,
         "test_image": filename_b,
         "results": [
@@ -81,3 +91,27 @@ def analyze_classical(
             _serialize_result("SIFT", sift_result),
         ],
     }
+    response["stored_in_db"] = save_analysis_result(
+        analysis_type="classical_multi",
+        payload=response,
+        input_filename=filename_b,
+        reference_filename=filename_a,
+        decision=min(
+            (
+                response["results"][0]["decision"],
+                response["results"][1]["decision"],
+                response["results"][2]["decision"],
+            ),
+            key=lambda x: 0 if x == "suspicious" else 1,
+        ),
+        score=round(
+            (
+                response["results"][0]["similarity_score"]
+                + response["results"][1]["similarity_score"]
+                + response["results"][2]["similarity_score"]
+            )
+            / 3.0,
+            4,
+        ),
+    )
+    return response

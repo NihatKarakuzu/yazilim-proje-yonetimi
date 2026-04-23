@@ -73,6 +73,19 @@ Varsayılan adres: `http://127.0.0.1:8000`
 Dokümantasyon: `http://127.0.0.1:8000/docs`
 Kullanıcı arayüzü: `http://127.0.0.1:8000/`
 
+### PostgreSQL Bağlantısı (Opsiyonel ama önerilir)
+
+Analiz sonuçlarının veritabanına kaydedilmesi için `DATABASE_URL` değişkeni tanımlanır.
+
+Windows PowerShell örneği:
+
+```powershell
+$env:DATABASE_URL="postgresql://postgres:PAROLA@localhost:5432/yazilim_proje"
+py -m uvicorn app.main:app --reload
+```
+
+`DATABASE_URL` yoksa API çalışmaya devam eder, sadece veritabanı kaydı yapılmaz.
+
 ## Klasik Analiz (2. Aşama)
 
 Bu aşamada klasik algoritmalar genişletildi:
@@ -94,3 +107,8 @@ Bu aşamada AI katmanı için ilk çalışan prototip endpointi eklendi:
   - model çıktılarının ortalaması ile birleşik karar döner
 
 Not: Bu sürüm, gerçek model eğitimi öncesi çalışan prototip akıştır. Sonraki adımda eğitimli CNN/LSTM modelleri entegre edilecektir.
+
+## Sonuç Geçmişi
+
+- `GET /api/analysis/history?limit=20`
+  - Veritabanına kaydedilmiş son analiz sonuçlarını listeler.

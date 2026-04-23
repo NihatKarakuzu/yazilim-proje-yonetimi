@@ -74,10 +74,12 @@ Dokümantasyon: `http://127.0.0.1:8000/docs`
 
 ## Klasik Analiz (2. Aşama)
 
-Bu aşamada ORB tabanlı karşılaştırma endpointi eklendi:
+Bu aşamada klasik algoritmalar genişletildi:
 
 - `POST /api/analyze/orb`
   - `reference_image`: referans görsel
   - `test_image`: analiz edilecek görsel
 
-Yanıt içinde karar (`authentic_like` veya `suspicious`) ve eşleşme metrikleri döner.
+- `POST /api/analyze/classical`
+  - ORB + AKAZE + SIFT sonuçlarını tek yanıtta döner
+  - her algoritma için karar (`authentic_like` veya `suspicious`) ve metrik üretir

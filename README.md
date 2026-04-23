@@ -119,6 +119,24 @@ Model durumunu kontrol etmek için:
 
 - `GET /api/ai/model-status`
 
+### CNN Eğitim ve ONNX Export
+
+Eğitim için veri setini `dataset/README.md` içinde verilen yapıda hazırlayın.
+
+Komut:
+
+```bash
+cd backend
+python train/train_cnn.py --data-dir ../dataset/train --epochs 8
+```
+
+Çıktılar:
+
+- `models/deepfake_detector.pth`
+- `models/deepfake_detector.onnx`
+
+ONNX dosyası üretildiğinde API bunu otomatik algılar ve gerçek model moduna geçer.
+
 ## Sonuç Geçmişi
 
 - `GET /api/analysis/history?limit=20`

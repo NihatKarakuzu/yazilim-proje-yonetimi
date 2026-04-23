@@ -5,15 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Görüntü Sahteciliği Tespit Sistemi</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 24px; background: #f7f8fa; color: #111; }
+    body { font-family: Arial, sans-serif; margin: 24px; background: #f7f8fa; color: #111; max-width: 1100px; }
     h1 { margin-bottom: 8px; }
     .card { background: #fff; padding: 16px; border-radius: 10px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
-    input[type="file"] { background: #fff; padding: 6px; border: 1px solid #ddd; border-radius: 6px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0; align-items: center; }
+    input[type="file"], select { background: #fff; padding: 6px; border: 1px solid #ddd; border-radius: 6px; min-width: 240px; }
     button { background: #2563eb; color: white; border: 0; border-radius: 6px; padding: 8px 14px; cursor: pointer; }
     button:hover { background: #1d4ed8; }
     pre { background: #0b1020; color: #e2e8f0; padding: 12px; border-radius: 8px; overflow: auto; }
-    .hint { color: #444; font-size: 14px; }
+    .hint { color: #444; font-size: 14px; margin-top: 0; }
+    .step { font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #1f2937; }
     .status-badge { display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; }
     .status-ok { background: #dcfce7; color: #166534; }
     .status-warn { background: #fef3c7; color: #92400e; }
@@ -24,45 +25,45 @@
     .pill { display: inline-block; padding: 4px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
     .pill-ok { background: #dcfce7; color: #166534; }
     .pill-risk { background: #fee2e2; color: #991b1b; }
-    .section-title { margin: 10px 0 6px; font-size: 14px; color: #222; }
     .summary-note { margin-top: 10px; padding: 10px; border-radius: 8px; background: #eef2ff; color: #1e3a8a; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border-bottom: 1px solid #e5e7eb; padding: 8px; text-align: left; font-size: 14px; }
+    th { color: #555; background: #f9fafb; }
+    details summary { cursor: pointer; font-weight: 600; color: #1f2937; margin-bottom: 8px; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
   <h1>Görüntü Sahteciliği Tespit Sistemi</h1>
-  <p class="hint">Bu arayüzden API endpointlerini doğrudan test edebilirsin.</p>
+  <p class="hint">Adım adım akış: Analiz türünü seç, dosyaları yükle, analizi çalıştır.</p>
 
   <section class="card">
-    <h3>Görsel Yükleme</h3>
+    <div class="step">1) Analiz Türünü Seç</div>
     <div class="row">
-      <input id="uploadImage" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" />
-      <button onclick="uploadImage()">Yükle</button>
-    </div>
-  </section>
-
-  <section class="card">
-    <h3>Klasik Analiz (ORB + AKAZE + SIFT)</h3>
-    <div class="row">
-      <input id="classicalRef" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" />
-      <input id="classicalTest" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" />
-      <button onclick="runClassical()">Analizi Başlat</button>
-    </div>
-  </section>
-
-  <section class="card">
-    <h3>AI Analiz</h3>
-    <div id="modelStatusBadge" class="status-badge status-warn">Model durumu: kontrol edilmedi</div>
-    <div class="row">
-      <input id="aiImage" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" />
-      <button onclick="runAi()">AI Analizi Başlat</button>
+      <select id="analysisType" onchange="onAnalysisTypeChanged()">
+        <option value="ai">AI Analiz (tek görsel)</option>
+        <option value="classical">Klasik Analiz (2 görsel)</option>
+      </select>
+      <span id="modelStatusBadge" class="status-badge status-warn">Model durumu: kontrol edilmedi</span>
       <button onclick="checkAiModel()">Model Durumunu Kontrol Et</button>
     </div>
-  </section>
 
-  <section class="card">
-    <h3>Analiz Geçmişi (PostgreSQL)</h3>
-    <div class="row">
-      <button onclick="loadHistory()">Geçmişi Getir</button>
+    <div id="aiPanel">
+      <div class="step">2) AI için görsel seç</div>
+      <div class="row">
+        <input id="aiImage" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" />
+        <button onclick="runAi()">AI Analizi Başlat</button>
+      </div>
+    </div>
+
+    <div id="classicalPanel" class="hidden">
+      <div class="step">2) Klasik analiz için iki görsel seç</div>
+      <div class="row">
+        <input id="classicalRef" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" />
+        <input id="classicalTest" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" />
+        <button onclick="runClassical()">Klasik Analizi Başlat</button>
+      </div>
+      <p class="hint">Not: Klasik analiz için detaylı/tekstürlü görseller daha sağlıklı sonuç verir.</p>
     </div>
   </section>
 
@@ -78,16 +79,34 @@
 
   <section class="card">
     <h3>Ham JSON Sonuç</h3>
-    <pre id="resultArea">Henüz işlem yapılmadı.</pre>
+    <details>
+      <summary>JSON detayını göster/gizle</summary>
+      <pre id="resultArea">Henüz işlem yapılmadı.</pre>
+    </details>
+  </section>
+
+  <section class="card">
+    <h3>Analiz Geçmişi (PostgreSQL)</h3>
+    <div class="row">
+      <button onclick="loadHistory()">Geçmişi Getir</button>
+    </div>
   </section>
 
   <script>
     const resultArea = document.getElementById("resultArea");
     const summaryArea = document.getElementById("summaryArea");
+    const aiPanel = document.getElementById("aiPanel");
+    const classicalPanel = document.getElementById("classicalPanel");
 
     function showResult(data) {
       resultArea.textContent = JSON.stringify(data, null, 2);
       renderSummary(data);
+    }
+
+    function onAnalysisTypeChanged() {
+      const mode = document.getElementById("analysisType").value;
+      aiPanel.classList.toggle("hidden", mode !== "ai");
+      classicalPanel.classList.toggle("hidden", mode !== "classical");
     }
 
     function showError(error) {
@@ -120,35 +139,67 @@
       }
 
       if (data.results && Array.isArray(data.results)) {
-        const cards = data.results.map(item => `
-          <div class="summary-item">
-            <div class="summary-label">${item.algorithm}</div>
-            <div class="summary-value">${decisionPill(item.decision)}</div>
-            <div class="section-title">Benzerlik Skoru: ${item.similarity_score}</div>
-          </div>
-        `).join("");
+        const cards = `
+          <table>
+            <thead>
+              <tr>
+                <th>Algoritma</th>
+                <th>Karar</th>
+                <th>Benzerlik Skoru</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.results.map(item => `
+                <tr>
+                  <td>${item.algorithm}</td>
+                  <td>${decisionPill(item.decision)}</td>
+                  <td>${item.similarity_score}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
         const note = data.summary?.explanation
           ? `<div class="summary-note">${data.summary.explanation}</div>`
           : "";
-        summaryArea.innerHTML = cards + note;
+        const top = data.summary
+          ? `<div class="summary-item"><div class="summary-label">Genel Karar</div><div class="summary-value">${decisionPill(data.summary.decision)}</div></div>`
+          : "";
+        summaryArea.innerHTML = top + cards + note;
         return;
       }
 
       if (data.ensemble && data.models) {
-        const modelItems = data.models.map(item => `
-          <div class="summary-item">
-            <div class="summary-label">${item.model}</div>
-            <div class="summary-value">${decisionPill(item.decision)}</div>
-            <div class="section-title">Sahte Olasılığı: ${item.fake_probability}</div>
-          </div>
-        `).join("");
+        const modelItems = `
+          <table>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Karar</th>
+                <th>Sahte Olasılığı</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.models.map(item => `
+                <tr>
+                  <td>${item.model}</td>
+                  <td>${decisionPill(item.decision)}</td>
+                  <td>${item.fake_probability}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
         summaryArea.innerHTML = `
           <div class="summary-item">
             <div class="summary-label">AI Ensemble</div>
             <div class="summary-value">${decisionPill(data.ensemble.decision)}</div>
             <div class="section-title">Sahte Olasılığı: ${data.ensemble.fake_probability}</div>
           </div>
-          ${modelItems}
+          <div class="summary-item" style="grid-column: 1 / -1;">
+            <div class="summary-label">Model Detayları</div>
+            ${modelItems}
+          </div>
           ${data.ensemble.explanation ? `<div class="summary-note">${data.ensemble.explanation}</div>` : ""}
         `;
         return;
@@ -168,21 +219,6 @@
           <div class="summary-value">Sonuç alındı</div>
         </div>
       `;
-    }
-
-    async function uploadImage() {
-      const image = document.getElementById("uploadImage").files[0];
-      if (!image) return showError("Lütfen bir dosya seç.");
-      const form = new FormData();
-      form.append("file", image);
-      try {
-        const res = await fetch("/api/upload", { method: "POST", body: form });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Yükleme başarısız.");
-        showResult(data);
-      } catch (e) {
-        showError(e.message);
-      }
     }
 
     async function runClassical() {
@@ -253,6 +289,7 @@
     }
 
     checkAiModel();
+    onAnalysisTypeChanged();
   </script>
 </body>
 </html>

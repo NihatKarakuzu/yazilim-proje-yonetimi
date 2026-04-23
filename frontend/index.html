@@ -25,6 +25,7 @@
     .pill-ok { background: #dcfce7; color: #166534; }
     .pill-risk { background: #fee2e2; color: #991b1b; }
     .section-title { margin: 10px 0 6px; font-size: 14px; color: #222; }
+    .summary-note { margin-top: 10px; padding: 10px; border-radius: 8px; background: #eef2ff; color: #1e3a8a; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -126,7 +127,10 @@
             <div class="section-title">Benzerlik Skoru: ${item.similarity_score}</div>
           </div>
         `).join("");
-        summaryArea.innerHTML = cards;
+        const note = data.summary?.explanation
+          ? `<div class="summary-note">${data.summary.explanation}</div>`
+          : "";
+        summaryArea.innerHTML = cards + note;
         return;
       }
 
@@ -145,6 +149,7 @@
             <div class="section-title">Sahte Olasılığı: ${data.ensemble.fake_probability}</div>
           </div>
           ${modelItems}
+          ${data.ensemble.explanation ? `<div class="summary-note">${data.ensemble.explanation}</div>` : ""}
         `;
         return;
       }

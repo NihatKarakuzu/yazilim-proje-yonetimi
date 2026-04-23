@@ -12,11 +12,23 @@ from app.services.classical_analysis import (
 router = APIRouter(tags=["Classical Analysis"])
 
 
+def _decision_message(decision: str, score: float) -> str:
+    if decision == "suspicious":
+        return (
+            f"Benzerlik skoru {score:.2f} seviyesinde. Görüntüler arasında anlamlı farklar "
+            "tespit edildi, içerik değiştirilmiş olabilir."
+        )
+    return (
+        f"Benzerlik skoru {score:.2f} seviyesinde. Görüntüler büyük ölçüde tutarlı görünüyor."
+    )
+
+
 def _serialize_result(algorithm: str, result: FeatureAnalysisResult) -> dict:
     return {
         "algorithm": algorithm,
         "decision": result.decision,
         "similarity_score": result.similarity_score,
+        "explanation": _decision_message(result.decision, result.similarity_score),
         "metrics": {
             "keypoints_image_a": result.keypoints_image_a,
             "keypoints_image_b": result.keypoints_image_b,
@@ -91,19 +103,21 @@ def analyze_classical(
             _serialize_result("SIFT", sift_result),
         ],
     }
+    suspicious_count = sum(1 for item in response["results"] if item["decision"] == "suspicious")
+    response["summary"] = {
+        "decision": "suspicious" if suspicious_count >= 2 else "authentic_like",
+        "explanation": (
+            "Algoritmaların çoğu şüpheli sonuç üretti. Görüntüde değişiklik olasılığı yüksektir."
+            if suspicious_count >= 2
+            else "Algoritmaların çoğu orijinale yakın sonuç verdi. Görüntü genel olarak tutarlı."
+        ),
+    }
     response["stored_in_db"] = save_analysis_result(
         analysis_type="classical_multi",
         payload=response,
         input_filename=filename_b,
         reference_filename=filename_a,
-        decision=min(
-            (
-                response["results"][0]["decision"],
-                response["results"][1]["decision"],
-                response["results"][2]["decision"],
-            ),
-            key=lambda x: 0 if x == "suspicious" else 1,
-        ),
+        decision=response["summary"]["decision"],
         score=round(
             (
                 response["results"][0]["similarity_score"]

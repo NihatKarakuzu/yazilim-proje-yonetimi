@@ -7,6 +7,18 @@ from app.services.ai_analysis import ai_model_status, analyze_ai_models
 router = APIRouter(tags=["AI Analysis"])
 
 
+def _ai_explanation(decision: str, probability: float) -> str:
+    if decision == "suspicious":
+        return (
+            f"Ensemble sahtecilik olasılığı {probability:.2f}. Model çıktıları görüntünün "
+            "değiştirilmiş olabileceğini gösteriyor."
+        )
+    return (
+        f"Ensemble sahtecilik olasılığı {probability:.2f}. Model çıktıları görüntünün "
+        "orijinale yakın olduğunu gösteriyor."
+    )
+
+
 @router.get("/ai/model-status")
 def model_status() -> dict:
     return ai_model_status()
@@ -32,6 +44,9 @@ def analyze_ai(image: UploadFile = File(...)) -> dict:
         "ensemble": {
             "fake_probability": bundle.ensemble_probability,
             "decision": bundle.ensemble_decision,
+            "explanation": _ai_explanation(
+                bundle.ensemble_decision, bundle.ensemble_probability
+            ),
         },
         "models": [
             {

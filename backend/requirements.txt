@@ -6,3 +6,10 @@ numpy
 psycopg[binary]
 torch
 torchvision
+pandas
+matplotlib
+openpyxl
+scikit-learn
+seaborn
+onnx
+onnxruntime

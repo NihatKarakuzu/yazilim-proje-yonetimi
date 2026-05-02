@@ -15,17 +15,23 @@ router = APIRouter(tags=["Classical Analysis"])
 def _decision_message(decision: str, score: float) -> str:
     if decision == "suspicious":
         return (
-            f"Benzerlik skoru {score:.2f} seviyesinde. Görüntüler arasında anlamlı farklar "
-            "tespit edildi, içerik değiştirilmiş olabilir."
+            f"Görüntüler arasında %{(1.0 - score)*100:.0f} oranında anlamlı farklar tespit edildi. "
+            "İçerik üzerinde oynama yapılmış olma ihtimali yüksektir."
         )
     return (
-        f"Benzerlik skoru {score:.2f} seviyesinde. Görüntüler büyük ölçüde tutarlı görünüyor."
+        f"Görüntüler %{score*100:.0f} oranında tutarlı görünüyor. İçerik orijinal kabul edilebilir."
     )
 
 
 def _serialize_result(algorithm: str, result: FeatureAnalysisResult) -> dict:
+    # Algorithm name mapping
+    name_map = {
+        "ORB": "Hızlı Tarama",
+        "AKAZE": "Detay Analizi",
+        "SIFT": "Hassas Karşılaştırma",
+    }
     return {
-        "algorithm": algorithm,
+        "algorithm": name_map.get(algorithm, algorithm),
         "decision": result.decision,
         "similarity_score": result.similarity_score,
         "explanation": _decision_message(result.decision, result.similarity_score),
@@ -109,7 +115,7 @@ def analyze_classical(
         "explanation": (
             "Algoritmaların çoğu şüpheli sonuç üretti. Görüntüde değişiklik olasılığı yüksektir."
             if suspicious_count >= 2
-            else "Algoritmaların çoğu orijinale yakın sonuç verdi. Görüntü genel olarak tutarlı."
+            else "Analiz edilen yöntemlerin çoğu görüntünün orijinal olduğunu doğrulamaktadır."
         ),
     }
     response["stored_in_db"] = save_analysis_result(

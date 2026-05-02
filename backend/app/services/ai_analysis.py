@@ -5,6 +5,12 @@ import cv2
 import numpy as np
 
 
+import torch
+import torch.nn as nn
+from torchvision import models, transforms
+from PIL import Image
+import io
+
 @dataclass
 class AiAnalysisResult:
     model: str
@@ -19,6 +25,75 @@ class AiAnalysisBundle:
     ensemble_decision: str
     inference_mode: str
 
+
+# --- Model Architectures ---
+
+class SimpleCNN(nn.Module):
+    def __init__(self):
+        super(SimpleCNN, self).__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(3, 32, 3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(32, 64, 3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(64, 128, 3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Flatten()
+        )
+        self.classifier = nn.Sequential(
+            nn.Linear(128 * 4 * 4, 512),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(512, 1)
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = self.classifier(x)
+        return x
+
+def get_resnet_model():
+    model = models.resnet18(pretrained=False)
+    num_ftrs = model.fc.in_features
+    model.fc = nn.Linear(num_ftrs, 1)
+    return model
+
+# --- Global Model Instances (Lazy Load) ---
+MODELS = {
+    "simple_cnn": None,
+    "resnet18": None
+}
+
+def _load_torch_models():
+    if MODELS["simple_cnn"] is not None:
+        return
+    
+    device = torch.device("cpu") # Server-side CPU is safer/easier for simple inference
+    
+    # Simple CNN
+    try:
+        m1 = SimpleCNN()
+        path1 = Path("models") / "simple_cnn.pth"
+        if path1.exists():
+            m1.load_state_dict(torch.load(str(path1), map_location=device))
+        m1.eval()
+        MODELS["simple_cnn"] = m1
+    except Exception as e:
+        print(f"Error loading SimpleCNN: {e}")
+
+    # ResNet18
+    try:
+        m2 = get_resnet_model()
+        path2 = Path("models") / "resnet18_forgery.pth"
+        if path2.exists():
+            m2.load_state_dict(torch.load(str(path2), map_location=device))
+        m2.eval()
+        MODELS["resnet18"] = m2
+    except Exception as e:
+        print(f"Error loading ResNet18: {e}")
 
 def _decode_image(raw_bytes: bytes, filename: str) -> np.ndarray:
     arr = np.frombuffer(raw_bytes, dtype=np.uint8)
@@ -37,40 +112,25 @@ def _decision(probability: float) -> str:
     return "suspicious" if probability >= 0.5 else "authentic_like"
 
 
-def _onnx_model_path() -> Path:
-    return Path("models") / "deepfake_detector.onnx"
-
-
-def _onnx_model_exists() -> bool:
-    return _onnx_model_path().is_file()
-
-
-def _prepare_onnx_input(image: np.ndarray) -> np.ndarray:
-    resized = cv2.resize(image, (224, 224), interpolation=cv2.INTER_AREA)
-    normalized = resized.astype(np.float32) / 255.0
-    # NHWC -> NCHW
-    chw = np.transpose(normalized, (2, 0, 1))
-    return np.expand_dims(chw, axis=0)
-
-
-def _onnx_probability(image: np.ndarray) -> float:
-    model_path = _onnx_model_path()
-    net = cv2.dnn.readNetFromONNX(str(model_path))
-    blob = _prepare_onnx_input(image)
-    net.setInput(blob)
-    output = net.forward()
-    value = float(np.squeeze(output))
-    probability = 1.0 / (1.0 + np.exp(-value))
-    return round(float(max(0.0, min(1.0, probability))), 4)
-
-
-def _cnn_proxy_probability(image: np.ndarray) -> float:
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    laplacian_var = float(cv2.Laplacian(gray, cv2.CV_64F).var())
-    edge_density = float(np.mean(cv2.Canny(gray, 100, 200) > 0))
-    blur_score = 1.0 - _normalize(laplacian_var, 10.0, 3500.0)
-    edge_score = 1.0 - _normalize(edge_density, 0.03, 0.35)
-    return round(float(0.6 * blur_score + 0.4 * edge_score), 4)
+def _torch_inference(model, image_bytes: bytes, resize_to=(32, 32)) -> float:
+    if model is None:
+        return 0.5 # Default neutral if failed to load
+    
+    try:
+        transform = transforms.Compose([
+            transforms.Resize(resize_to),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
+        img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
+        tensor = transform(img).unsqueeze(0)
+        
+        with torch.no_grad():
+            output = model(tensor)
+            prob = torch.sigmoid(output).item()
+        return round(float(prob), 4)
+    except Exception:
+        return 0.5
 
 
 def _frequency_proxy_probability(image: np.ndarray) -> float:
@@ -86,58 +146,47 @@ def _frequency_proxy_probability(image: np.ndarray) -> float:
 
 
 def analyze_ai_models(image_bytes: bytes, filename: str) -> AiAnalysisBundle:
+    _load_torch_models()
     image = _decode_image(image_bytes, filename)
 
-    if _onnx_model_exists():
-        onnx_prob = _onnx_probability(image)
-        freq_prob = _frequency_proxy_probability(image)
-        results = [
-            AiAnalysisResult(
-                model="cnn_onnx_v1",
-                fake_probability=onnx_prob,
-                decision=_decision(onnx_prob),
-            ),
-            AiAnalysisResult(
-                model="frequency_proxy_v1",
-                fake_probability=freq_prob,
-                decision=_decision(freq_prob),
-            ),
-        ]
-        ensemble_probability = round((onnx_prob + freq_prob) / 2.0, 4)
-        return AiAnalysisBundle(
-            model_results=results,
-            ensemble_probability=ensemble_probability,
-            ensemble_decision=_decision(ensemble_probability),
-            inference_mode="onnx+proxy",
-        )
-
-    cnn_prob = _cnn_proxy_probability(image)
+    # 1. Simple CNN Analysis
+    cnn_prob = _torch_inference(MODELS["simple_cnn"], image_bytes, resize_to=(32, 32))
+    
+    # 2. ResNet18 Analysis (ResNet usually uses 224x224 or 32x32 depending on training)
+    # Looking at train_dual_models.py, it used 32x32 for both!
+    resnet_prob = _torch_inference(MODELS["resnet18"], image_bytes, resize_to=(32, 32))
+    
+    # 3. Frequency Analysis
     freq_prob = _frequency_proxy_probability(image)
+
     results = [
-        AiAnalysisResult(
-            model="cnn_proxy_v1",
-            fake_probability=cnn_prob,
-            decision=_decision(cnn_prob),
-        ),
-        AiAnalysisResult(
-            model="frequency_proxy_v1",
-            fake_probability=freq_prob,
-            decision=_decision(freq_prob),
-        ),
+        AiAnalysisResult(model="cnn_simple_v1", fake_probability=cnn_prob, decision=_decision(cnn_prob)),
+        AiAnalysisResult(model="resnet18_v1", fake_probability=resnet_prob, decision=_decision(resnet_prob)),
+        AiAnalysisResult(model="frequency_analiz_v1", fake_probability=freq_prob, decision=_decision(freq_prob)),
     ]
-    ensemble_probability = round((cnn_prob + freq_prob) / 2.0, 4)
+
+    # Weighted ensemble or consensus
+    # For consensus, let's see how many say suspicious
+    suspicious_count = sum(1 for r in results if r.decision == "suspicious")
+    
+    # Probability can be the average
+    ensemble_probability = round((cnn_prob + resnet_prob + freq_prob) / 3.0, 4)
+    
+    # Decision by majority (2/3)
+    ensemble_decision = "suspicious" if suspicious_count >= 2 else "authentic_like"
+
     return AiAnalysisBundle(
         model_results=results,
         ensemble_probability=ensemble_probability,
-        ensemble_decision=_decision(ensemble_probability),
-        inference_mode="proxy-only",
+        ensemble_decision=ensemble_decision,
+        inference_mode="torch-comparative",
     )
 
 
 def ai_model_status() -> dict:
-    model_path = _onnx_model_path()
+    _load_torch_models()
     return {
-        "onnx_model_found": _onnx_model_exists(),
-        "expected_model_path": str(model_path),
-        "active_mode": "onnx+proxy" if _onnx_model_exists() else "proxy-only",
+        "simple_cnn_loaded": MODELS["simple_cnn"] is not None,
+        "resnet18_loaded": MODELS["resnet18"] is not None,
+        "active_mode": "torch-comparative",
     }

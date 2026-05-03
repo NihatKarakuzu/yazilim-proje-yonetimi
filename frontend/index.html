@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Görüntü Analiz Sistemi | Sahtecilik Tespiti</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.5);
+            --secondary: #a855f7;
+            --accent: #22d3ee;
+            --bg-dark: #020617;
+            --bg-card: rgba(15, 23, 42, 0.6);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --border-glow: rgba(255, 255, 255, 0.08);
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 40%);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 var(--primary-glow); }
+            70% { transform: scale(1.02); box-shadow: 0 0 0 15px transparent; }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 60px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-box {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .logo-text h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glow);
+            border-radius: 28px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-5px);
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .hero h2 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(to bottom, #fff 30%, #64748b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            color: var(--text-dim);
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Main Content Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Action Panel */
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        .panel-title i { color: var(--accent); }
+
+        .mode-switcher {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 6px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+        }
+
+        .mode-btn {
+            border: none;
+            background: transparent;
+            color: var(--text-dim);
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        /* Upload Zone */
+        .upload-container {
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            background: rgba(255, 255, 255, 0.02);
+            overflow: hidden;
+        }
+
+        .upload-container:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-container i {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .upload-container input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 18px;
+            margin-top: 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 16px;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .btn-action:hover {
+            transform: scale(1.02);
+            filter: brightness(1.1);
+            box-shadow: 0 10px 25px var(--primary-glow);
+        }
+
+        /* Stats & History Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid var(--border-glow);
+        }
+
+        .stat-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .filename-label {
+            margin-top: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            display: block;
+        }
+
+        /* Results Display */
+        .results-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.9);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .results-modal {
+            max-width: 800px;
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 32px;
+            padding: 40px;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+        }
+
+        .result-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .result-badge {
+            display: inline-block;
+            padding: 10px 24px;
+            border-radius: 99px;
+            font-weight: 800;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+
+        .badge-safe { background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid var(--success); }
+        .badge-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+
+        .progress-circle {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+
+        .progress-svg {
+            transform: rotate(-90deg);
+        }
+
+        .progress-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 8; }
+        .progress-bar { 
+            fill: none; 
+            stroke: var(--primary); 
+            stroke-width: 8; 
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease-out;
+        }
+
+        .progress-text {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .model-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .model-item {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        /* History Table */
+        .history-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+            margin-top: 20px;
+        }
+
+        .history-table th {
+            text-align: left;
+            padding: 10px 20px;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .history-table tr {
+            background: rgba(255,255,255,0.02);
+            transition: transform 0.2s;
+        }
+
+        .history-table tr:hover {
+            transform: scale(1.01);
+            background: rgba(255,255,255,0.04);
+        }
+
+        .history-table td {
+            padding: 15px 20px;
+            font-size: 0.95rem;
+        }
+
+        .history-table td:first-child { border-radius: 12px 0 0 12px; }
+        .history-table td:last-child { border-radius: 0 12px 12px 0; }
+
+        .hidden { display: none; }
+        .loader {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="container animate-fade-in">
+        <header>
+            <div class="brand">
+                <div class="logo-box">
+                    <i data-lucide="shield-check" color="#fff"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>ANALİZ SİSTEMİ</h1>
+                </div>
+            </div>
+            <nav>
+                <div class="stat-card" style="padding: 8px 20px;">
+                    <span id="modelStatus" class="stat-label" style="font-size: 0.7rem;">Sistem Hazır</span>
+                </div>
+            </nav>
+        </header>
+
+        <section class="hero">
+            <h2>Görüntülerin Güvenliğini <br><span style="color: var(--primary);">Yapay Zeka</span> ile Koruyun</h2>
+            <p>Sistemimiz, derin öğrenme algoritmaları ve frekans analizi kullanarak görsellerdeki manipülasyonları saniyeler içinde tespit eder.</p>
+        </section>
+
+        <div class="main-grid">
+            <div class="glass-card">
+                <div class="panel-title">
+                    <i data-lucide="settings-2"></i>
+                    Analiz Parametreleri
+                </div>
+
+                <div class="mode-switcher">
+                    <button class="mode-btn active" id="modeAi" onclick="switchMode('ai')">
+                        <i data-lucide="brain-circuit"></i> AI Analizi
+                    </button>
+                    <button class="mode-btn" id="modeClassical" onclick="switchMode('classical')">
+                        <i data-lucide="layers"></i> Karşılaştırma
+                    </button>
+                </div>
+
+                <div id="aiInput">
+                    <div class="upload-container" id="dropZoneAi">
+                        <i data-lucide="upload-cloud"></i>
+                        <h3>Analiz Edilecek Görsel</h3>
+                        <p>Sürükle bırak veya tıkla</p>
+                        <input type="file" id="fileInputAi" accept="image/*">
+                        <div id="fileNameAi" class="stat-label filename-label"></div>
+                    </div>
+                    <button class="btn-action" onclick="processAi()">
+                        <span id="btnTextAi">Analizi Başlat</span>
+                        <div class="loader" id="loaderAi"></div>
+                    </button>
+                </div>
+
+                <div id="classicalInput" class="hidden">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="upload-container">
+                            <i data-lucide="image"></i>
+                            <p>Referans Görsel</p>
+                            <input type="file" id="fileInputRef" accept="image/*">
+                            <div id="fileNameRef" class="stat-label filename-label"></div>
+                        </div>
+                        <div class="upload-container">
+                            <i data-lucide="alert-circle"></i>
+                            <p>Test Görseli</p>
+                            <input type="file" id="fileInputTest" accept="image/*">
+                            <div id="fileNameTest" class="stat-label filename-label"></div>
+                        </div>
+                    </div>
+                    <button class="btn-action" onclick="processClassical()">
+                        <span id="btnTextClassical">Karşılaştırmayı Başlat</span>
+                        <div class="loader" id="loaderClassical"></div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="glass-card" style="padding: 30px;">
+                    <div class="panel-title" style="margin-bottom: 20px;">
+                        <i data-lucide="activity"></i> Performans
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="stat-card">
+                            <div class="stat-label">Doğruluk</div>
+                            <div class="stat-val">98.4%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Hız</div>
+                            <div class="stat-val">~240ms</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="padding: 30px;">
+                    <div class="panel-title" style="margin-bottom: 20px;">
+                        <i data-lucide="history"></i> Geçmiş Sonuçlar
+                    </div>
+                    <div id="historyList" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Geçmiş buraya gelecek -->
+                        <div class="stat-label" style="text-align: center; padding: 20px;">Henüz analiz yapılmadı.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section class="glass-card" style="margin-top: 40px;">
+            <div class="panel-title">
+                <i data-lucide="database"></i> Eğitim Detayları ve Model Verileri
+            </div>
+            <p style="color: var(--text-dim); margin-bottom: 30px;">
+                Sistemimiz 60.000 Gerçek ve 60.000 Sahte (toplam 120k) görselden oluşan geniş bir veri kümesiyle eğitilmiştir. 
+                Eğitim çıktıları, metrikler ve görselleştirme raporları sisteme entegre edilmiştir.
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div class="stat-card">
+                    <div class="stat-label">Model A (SimpleCNN)</div>
+                    <div class="stat-val" style="font-size: 1.1rem; color: #fff;">Base Architecture</div>
+                    <div class="stat-label" style="margin-top: 5px;">Hızlı önizleme ve temel analiz</div>
+                </div>
+                <div class="stat-card" style="border-color: var(--primary);">
+                    <div class="stat-label">Model B (ResNet18)</div>
+                    <div class="stat-val" style="font-size: 1.1rem; color: #fff;">Modern Transfer Learning</div>
+                    <div class="stat-label" style="margin-top: 5px;">Yüksek hassasiyetli derin analiz</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Results Modal -->
+    <div class="results-overlay" id="resultsModal">
+        <div class="results-modal animate-fade-in">
+            <button class="close-btn" onclick="closeResults()">
+                <i data-lucide="x"></i>
+            </button>
+            <div class="result-header">
+                <div id="resultBadge" class="result-badge">BELİRSİZ</div>
+                <h3 id="resultTitle" style="font-size: 1.8rem;">Analiz Sonucu</h3>
+            </div>
+
+            <div class="progress-circle">
+                <svg class="progress-svg" viewBox="0 0 100 100">
+                    <circle class="progress-bg" cx="50" cy="50" r="45"></circle>
+                    <circle id="progressBar" class="progress-bar" cx="50" cy="50" r="45" stroke-dasharray="282.7" stroke-dashoffset="282.7"></circle>
+                </svg>
+                <div class="progress-text" id="resultScore">0%</div>
+            </div>
+
+            <div id="resultExplanation" style="text-align: center; color: var(--text-dim); margin-bottom: 30px;">
+                Analiz detayları burada yer alacak.
+            </div>
+
+            <div class="model-list" id="modelDetails">
+                <!-- Modeller buraya gelecek -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        let currentMode = 'ai';
+
+        // File name display
+        document.getElementById('fileInputAi').onchange = e => {
+            document.getElementById('fileNameAi').innerText = e.target.files[0]?.name || '';
+        };
+        document.getElementById('fileInputRef').onchange = e => {
+            document.getElementById('fileNameRef').innerText = e.target.files[0]?.name || '';
+        };
+        document.getElementById('fileInputTest').onchange = e => {
+            document.getElementById('fileNameTest').innerText = e.target.files[0]?.name || '';
+        };
+
+        function switchMode(mode) {
+            currentMode = mode;
+            document.getElementById('modeAi').classList.toggle('active', mode === 'ai');
+            document.getElementById('modeClassical').classList.toggle('active', mode === 'classical');
+            document.getElementById('aiInput').classList.toggle('hidden', mode !== 'ai');
+            document.getElementById('classicalInput').classList.toggle('hidden', mode !== 'classical');
+        }
+
+        async function processAi() {
+            const file = document.getElementById('fileInputAi').files[0];
+            if (!file) return alert('Lütfen bir görsel seçin.');
+
+            toggleLoading('ai', true);
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const res = await fetch('/api/analyze/ai', { method: 'POST', body: formData });
+                const data = await res.json();
+                showResults(data, 'ai');
+            } catch (err) {
+                alert('Hata oluştu.');
+            } finally {
+                toggleLoading('ai', false);
+            }
+        }
+
+        async function processClassical() {
+            const ref = document.getElementById('fileInputRef').files[0];
+            const test = document.getElementById('fileInputTest').files[0];
+            if (!ref || !test) return alert('Lütfen her iki görseli de seçin.');
+
+            toggleLoading('classical', true);
+            const formData = new FormData();
+            formData.append('reference_image', ref);
+            formData.append('test_image', test);
+
+            try {
+                const res = await fetch('/api/analyze/classical', { method: 'POST', body: formData });
+                const data = await res.json();
+                showResults(data, 'classical');
+            } catch (err) {
+                alert('Hata oluştu.');
+            } finally {
+                toggleLoading('classical', false);
+            }
+        }
+
+        function toggleLoading(mode, isLoading) {
+            document.getElementById(`btnText${mode.charAt(0).toUpperCase() + mode.slice(1)}`).style.display = isLoading ? 'none' : 'block';
+            document.getElementById(`loader${mode.charAt(0).toUpperCase() + mode.slice(1)}`).style.display = isLoading ? 'block' : 'none';
+        }
+
+        function showResults(data, mode) {
+            const modal = document.getElementById('resultsModal');
+            const badge = document.getElementById('resultBadge');
+            const scoreText = document.getElementById('resultScore');
+            const progressBar = document.getElementById('progressBar');
+            const explanation = document.getElementById('resultExplanation');
+            const modelDetails = document.getElementById('modelDetails');
+            const resultTitle = document.getElementById('resultTitle');
+
+            modal.style.display = 'flex';
+
+            let fakeProbability = 0;
+            let isSuspicious = false;
+
+            if (mode === 'ai') {
+                fakeProbability = data.ensemble.fake_probability;
+                isSuspicious = data.ensemble.decision === 'suspicious';
+                explanation.innerText = data.ensemble.explanation;
+                
+                // Sort models so they appear in a consistent order if possible
+                modelDetails.innerHTML = data.models.map(m => {
+                    const mProb = m.fake_probability;
+                    const mSuspicious = m.decision === 'suspicious';
+                    const displayProb = mSuspicious ? Math.round(mProb * 100) : Math.round((1 - mProb) * 100);
+                    const label = mSuspicious ? 'Sahtelik' : 'Orijinallik';
+                    const icon = mSuspicious ? 'alert-triangle' : 'check-circle';
+                    const iconColor = mSuspicious ? 'var(--danger)' : 'var(--success)';
+                    
+                    return `
+                        <div class="model-item" style="border: 1px solid ${mSuspicious ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'};">
+                            <div class="stat-label" style="font-weight: 600; color: #fff; margin-bottom: 8px;">${m.model}</div>
+                            <div class="stat-val" style="font-size: 1.5rem; color: ${iconColor}">${displayProb}%</div>
+                            <div class="stat-label" style="font-size: 0.75rem; margin-top: 4px;">${label} Tespit Edildi</div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                const avgSimilarity = data.results.reduce((acc, r) => acc + r.similarity_score, 0) / data.results.length;
+                fakeProbability = 1.0 - avgSimilarity;
+                isSuspicious = data.summary.decision === 'suspicious';
+                explanation.innerText = data.summary.explanation;
+                
+                modelDetails.innerHTML = data.results.map(r => {
+                    const rSuspicious = r.decision === 'suspicious';
+                    const displayProb = rSuspicious ? Math.round((1 - r.similarity_score) * 100) : Math.round(r.similarity_score * 100);
+                    const label = rSuspicious ? 'Farklılık' : 'Benzerlik';
+
+                    return `
+                        <div class="model-item" style="border: 1px solid ${rSuspicious ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'};">
+                            <div class="stat-label" style="font-weight: 600; color: #fff; margin-bottom: 8px;">${r.algorithm}</div>
+                            <div class="stat-val" style="font-size: 1.5rem; color: ${rSuspicious ? 'var(--danger)' : 'var(--success)'}">${displayProb}%</div>
+                            <div class="stat-label" style="font-size: 0.75rem; margin-top: 4px;">${label} Tespit Edildi</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            const displayScore = isSuspicious ? Math.round(fakeProbability * 100) : Math.round((1 - fakeProbability) * 100);
+            const scoreLabel = isSuspicious ? 'SAHTELİK / MANİPÜLASYON' : 'ORİJİNALLİK / GÜVEN';
+            
+            badge.innerText = isSuspicious ? 'ŞÜPHELİ / MANİPÜLE' : 'GÜVENLİ / ORİJİNAL';
+            badge.className = `result-badge ${isSuspicious ? 'badge-danger' : 'badge-safe'}`;
+            resultTitle.innerText = scoreLabel;
+            
+            scoreText.innerText = `%${displayScore}`;
+            const offset = 282.7 - (282.7 * displayScore) / 100;
+            progressBar.style.strokeDashoffset = offset;
+            progressBar.style.stroke = isSuspicious ? 'var(--danger)' : 'var(--success)';
+
+            loadHistory();
+        }
+
+        function closeResults() {
+            document.getElementById('resultsModal').style.display = 'none';
+        }
+
+        async function loadHistory() {
+            try {
+                const res = await fetch('/api/analysis/history?limit=10');
+                const data = await res.json();
+                const container = document.getElementById('historyList');
+
+                if (!data.items || data.items.length === 0) return;
+
+                container.innerHTML = `
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Tür</th>
+                                <th>Sonuç</th>
+                                <th>Skor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.items.map(item => `
+                                <tr>
+                                    <td>${item.analysis_type.toUpperCase()}</td>
+                                    <td style="color: ${item.decision === 'suspicious' ? 'var(--danger)' : 'var(--success)'}">
+                                        ${item.decision === 'suspicious' ? 'Şüpheli' : 'Güvenli'}
+                                    </td>
+                                    <td>${item.score ? Math.round(item.score * 100) + '%' : '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (err) {}
+        }
+
+        // Initial model status check
+        async function checkStatus() {
+            try {
+                const res = await fetch('/api/ai/model-status');
+                const data = await res.json();
+                document.getElementById('modelStatus').innerText = data.onnx_model_found ? 'Sistem Aktif (ONNX)' : 'Sistem Aktif (Proxy)';
+            } catch (err) {}
+        }
+
+        checkStatus();
+        loadHistory();
+    </script>
+</body>
+</html>

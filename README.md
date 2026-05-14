@@ -69,6 +69,13 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+**SURF ve OpenCV:** SURF, `opencv-python` tekerleğinde yoktur; depo `opencv-contrib-python-headless` kullanır. Daha önce normal OpenCV kurduysanız çakışmayı kaldırıp yeniden kurun:
+
+```bash
+pip uninstall opencv-python opencv-python-headless opencv-contrib-python opencv-contrib-python-headless -y
+pip install -r requirements.txt
+```
+
 Varsayılan adres: `http://127.0.0.1:8000`  
 Dokümantasyon: `http://127.0.0.1:8000/docs`
 Kullanıcı arayüzü: `http://127.0.0.1:8000/`
@@ -95,7 +102,7 @@ Bu aşamada klasik algoritmalar genişletildi:
   - `test_image`: analiz edilecek görsel
 
 - `POST /api/analyze/classical`
-  - ORB + AKAZE + SIFT sonuçlarını tek yanıtta döner
+  - ORB + AKAZE + SIFT + SURF sonuçlarını tek yanıtta döner (SURF için contrib paketi gerekir)
   - her algoritma için karar (`authentic_like` veya `suspicious`) ve metrik üretir
 
 ## AI Analiz (3. Aşama - İlk Prototip)

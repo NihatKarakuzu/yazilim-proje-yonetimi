@@ -715,8 +715,8 @@
                 fakeProbability = 1.0 - avgSimilarity;
                 isSuspicious = data.summary.decision === 'suspicious';
                 explanation.innerText = data.summary.explanation;
-                
-                modelDetails.innerHTML = data.results.map(r => {
+
+                let classicalCards = data.results.map(r => {
                     const rSuspicious = r.decision === 'suspicious';
                     const displayProb = rSuspicious ? Math.round((1 - r.similarity_score) * 100) : Math.round(r.similarity_score * 100);
                     const label = rSuspicious ? 'Farklılık' : 'Benzerlik';
@@ -732,6 +732,19 @@
                         </div>
                     `;
                 }).join('');
+
+                if (data.surf_available === false) {
+                    classicalCards += `
+                        <div class="model-item" style="opacity: 0.75; border: 1px dashed rgba(148, 163, 184, 0.45);">
+                            <div style="font-weight: 700; color: #cbd5e1; margin-bottom: 4px; font-size: 1rem;">SURF — Hızlandırılmış Analiz (SURF)</div>
+                            <div class="stat-val" style="font-size: 1.1rem; color: #94a3b8;">Bu ortamda çalışmıyor</div>
+                            <div class="stat-label" style="font-size: 0.72rem; margin-top: 6px; text-transform: none; letter-spacing: 0;">
+                                Backend için: <code style="color: var(--accent);">pip uninstall opencv-python opencv-python-headless -y</code> ardından
+                                <code style="color: var(--accent);">pip install opencv-contrib-python-headless</code> (requirements.txt güncel).
+                            </div>
+                        </div>`;
+                }
+                modelDetails.innerHTML = classicalCards;
             }
 
             const displayScore = isSuspicious ? Math.round(fakeProbability * 100) : Math.round((1 - fakeProbability) * 100);

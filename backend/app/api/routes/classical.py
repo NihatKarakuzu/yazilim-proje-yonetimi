@@ -134,9 +134,7 @@ def analyze_classical(
         ),
     }
     if surf_result is None:
-        response["summary"]["explanation"] += (
-            " Not: SURF bu OpenCV kurulumunda kullanılamadı; özet ORB, AKAZE ve SIFT ile hesaplandı."
-        )
+        response["summary"]["explanation"] += " (SURF bu kurulumda atlandı.)"
     response["stored_in_db"] = save_analysis_result(
         analysis_type="classical_multi",
         payload=response,

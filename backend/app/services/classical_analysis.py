@@ -3,6 +3,34 @@ from dataclasses import dataclass
 import cv2
 import numpy as np
 
+class MahotasSURF:
+    def __init__(self, hessianThreshold=400):
+        self.threshold = 0.1
+
+    def detectAndCompute(self, image, mask=None):
+        try:
+            import mahotas.features.surf
+        except ImportError:
+            raise ValueError("SURF algoritması için 'mahotas' kütüphanesi eksik. 'pip install mahotas' çalıştırın.")
+
+        points = mahotas.features.surf.surf(image, threshold=self.threshold, max_points=2000)
+        
+        if points is None or len(points) == 0:
+            return [], None
+            
+        keypoints = []
+        descriptors = []
+        
+        for p in points:
+            y, x, scale, score, laplacian, angle = p[:6]
+            desc = p[6:]
+            kp = cv2.KeyPoint(x=float(x), y=float(y), size=float(scale), angle=float(angle), response=float(score))
+            keypoints.append(kp)
+            descriptors.append(desc)
+            
+        descriptors = np.array(descriptors, dtype=np.float32)
+        return keypoints, descriptors
+
 
 @dataclass
 class FeatureAnalysisResult:
@@ -47,18 +75,9 @@ def _analyze_with_detector(
         distance_limit = 250
         matcher_norm = cv2.NORM_L2
     elif detector_name == "SURF":
-        if hasattr(cv2, "xfeatures2d") and hasattr(cv2.xfeatures2d, "SURF_create"):
-            detector = cv2.xfeatures2d.SURF_create(hessianThreshold=400)
-        elif hasattr(cv2, "SURF_create"):
-            detector = cv2.SURF_create(hessianThreshold=400)
-        else:
-            raise ValueError("Bu OpenCV sürümünde SURF desteği bulunamadı.")
-        distance_limit = 0.75
+        detector = MahotasSURF(hessianThreshold=400)
+        distance_limit = 0.15
         matcher_norm = cv2.NORM_L2
-    elif detector_name == "BRISK":
-        detector = cv2.BRISK_create(thresh=30, octaves=3)
-        distance_limit = 50
-        matcher_norm = cv2.NORM_HAMMING
     else:
         raise ValueError("Bilinmeyen algoritma seçimi.")
 
@@ -117,12 +136,4 @@ def analyze_with_surf(
 ) -> FeatureAnalysisResult:
     return _analyze_with_detector(
         image_a_bytes, image_b_bytes, filename_a, filename_b, detector_name="SURF"
-    )
-
-
-def analyze_with_brisk(
-    image_a_bytes: bytes, image_b_bytes: bytes, filename_a: str, filename_b: str
-) -> FeatureAnalysisResult:
-    return _analyze_with_detector(
-        image_a_bytes, image_b_bytes, filename_a, filename_b, detector_name="BRISK"
     )

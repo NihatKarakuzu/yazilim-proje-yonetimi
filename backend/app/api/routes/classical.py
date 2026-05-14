@@ -4,7 +4,6 @@ from app.services.analysis_store import save_analysis_result
 from app.services.classical_analysis import (
     FeatureAnalysisResult,
     analyze_with_akaze,
-    analyze_with_brisk,
     analyze_with_orb,
     analyze_with_sift,
     analyze_with_surf,
@@ -32,7 +31,6 @@ def _serialize_result(algorithm: str, result: FeatureAnalysisResult) -> dict:
         "AKAZE": "Detay Analizi",
         "SIFT": "Hassas Karşılaştırma",
         "SURF": "Hızlandırılmış analiz (SURF)",
-        "BRISK": "BRISK — ikili görüntü özellik eşlemesi",
     }
     payload = {
         "algorithm_key": algorithm,
@@ -47,11 +45,6 @@ def _serialize_result(algorithm: str, result: FeatureAnalysisResult) -> dict:
             "total_matches": result.total_matches,
         },
     }
-    if algorithm == "BRISK":
-        payload["algorithm_note"] = (
-            "SURF ayrı bir yöntemdir ve patent nedeniyle hazır OpenCV tekerleğinde genelde çalışmaz. "
-            "Bu yüzden dördüncü skor BRISK ile üretilir."
-        )
     return payload
 
 
@@ -122,14 +115,6 @@ def analyze_classical(
     if surf_result is not None:
         fourth_result = surf_result
         fourth_key = "SURF"
-    else:
-        try:
-            fourth_result = analyze_with_brisk(
-                reference_bytes, test_bytes, filename_a, filename_b
-            )
-            fourth_key = "BRISK"
-        except ValueError:
-            fourth_result = None
 
     serialized = [
         _serialize_result("ORB", orb_result),
@@ -156,13 +141,9 @@ def analyze_classical(
             else "Analiz edilen yöntemlerin çoğu görüntünün orijinal olduğunu doğrulamaktadır."
         ),
     }
-    if fourth_key == "BRISK":
+    if fourth_key is None:
         response["summary"]["explanation"] += (
-            " Dördüncü sütun: SURF bu ortamda yok (patent); yerine BRISK ölçümü kullanıldı."
-        )
-    elif fourth_key is None:
-        response["summary"]["explanation"] += (
-            " Dördüncü yöntem (SURF/BRISK) bu görseller için hesaplanamadı."
+            " Dördüncü yöntem (SURF) bu görseller için hesaplanamadı veya sistemde bulunamadı."
         )
     response["stored_in_db"] = save_analysis_result(
         analysis_type="classical_multi",

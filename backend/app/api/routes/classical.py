@@ -4,6 +4,7 @@ from app.services.analysis_store import save_analysis_result
 from app.services.classical_analysis import (
     FeatureAnalysisResult,
     analyze_with_akaze,
+    analyze_with_brisk,
     analyze_with_orb,
     analyze_with_sift,
     analyze_with_surf,
@@ -31,6 +32,7 @@ def _serialize_result(algorithm: str, result: FeatureAnalysisResult) -> dict:
         "AKAZE": "Detay Analizi",
         "SIFT": "Hassas Karşılaştırma",
         "SURF": "Hızlandırılmış Analiz (SURF)",
+        "BRISK": "SURF alternatifi (BRISK — standart OpenCV)",
     }
     return {
         "algorithm_key": algorithm,
@@ -106,25 +108,37 @@ def analyze_classical(
     surf_result = None
     try:
         surf_result = analyze_with_surf(reference_bytes, test_bytes, filename_a, filename_b)
-    except ValueError:
-        # Örn. yetersiz özellik noktası
+    except (ValueError, Exception):
         pass
-    except Exception:
-        # cv2.error: patent / non-free kapalı derleme; eksik contrib; vb.
-        pass
+
+    fourth_result = None
+    fourth_key: str | None = None
+    if surf_result is not None:
+        fourth_result = surf_result
+        fourth_key = "SURF"
+    else:
+        try:
+            fourth_result = analyze_with_brisk(
+                reference_bytes, test_bytes, filename_a, filename_b
+            )
+            fourth_key = "BRISK"
+        except ValueError:
+            fourth_result = None
 
     serialized = [
         _serialize_result("ORB", orb_result),
         _serialize_result("AKAZE", akaze_result),
         _serialize_result("SIFT", sift_result),
     ]
-    if surf_result is not None:
-        serialized.append(_serialize_result("SURF", surf_result))
+    if fourth_result is not None:
+        serialized.append(_serialize_result(fourth_key, fourth_result))
 
     response = {
         "reference_image": filename_a,
         "test_image": filename_b,
-        "surf_available": surf_result is not None,
+        "surf_native": fourth_key == "SURF",
+        "fourth_detector": fourth_key,
+        "surf_available": fourth_key == "SURF",
         "results": serialized,
     }
     suspicious_count = sum(1 for item in response["results"] if item["decision"] == "suspicious")
@@ -136,8 +150,14 @@ def analyze_classical(
             else "Analiz edilen yöntemlerin çoğu görüntünün orijinal olduğunu doğrulamaktadır."
         ),
     }
-    if surf_result is None:
-        response["summary"]["explanation"] += " (SURF bu kurulumda atlandı.)"
+    if fourth_key == "BRISK":
+        response["summary"]["explanation"] += (
+            " Dördüncü analiz: PyPI OpenCV’de SURF patent nedeniyle kapalı olduğu için BRISK kullanıldı."
+        )
+    elif fourth_key is None:
+        response["summary"]["explanation"] += (
+            " Dördüncü yöntem (SURF/BRISK) bu görseller için hesaplanamadı."
+        )
     response["stored_in_db"] = save_analysis_result(
         analysis_type="classical_multi",
         payload=response,

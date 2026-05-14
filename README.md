@@ -76,7 +76,7 @@ pip uninstall opencv-python opencv-python-headless opencv-contrib-python opencv-
 pip install -r requirements.txt
 ```
 
-PyPI üzerindeki hazır OpenCV paketlerinde SURF çoğu zaman **patent / non-free** nedeniyle kapalıdır; bu durumda API yine çalışır, özet **ORB + AKAZE + SIFT** ile üretilir ve yanıtta `surf_available: false` döner.
+PyPI üzerindeki hazır OpenCV paketlerinde SURF çoğu zaman **patent / non-free** nedeniyle kapalıdır; bu durumda dördüncü ölçüm otomatik olarak **BRISK** ile yapılır (`fourth_detector`: `SURF` veya `BRISK`).
 
 Varsayılan adres: `http://127.0.0.1:8000`  
 Dokümantasyon: `http://127.0.0.1:8000/docs`
@@ -104,7 +104,7 @@ Bu aşamada klasik algoritmalar genişletildi:
   - `test_image`: analiz edilecek görsel
 
 - `POST /api/analyze/classical`
-  - ORB + AKAZE + SIFT + SURF sonuçlarını tek yanıtta döner (SURF için contrib paketi gerekir)
+  - ORB + AKAZE + SIFT + (SURF veya SURF mümkün değilse BRISK) sonuçlarını tek yanıtta döner; `fourth_detector` alanı hangi yöntemin kullanıldığını belirtir
   - her algoritma için karar (`authentic_like` veya `suspicious`) ve metrik üretir
 
 ## AI Analiz (3. Aşama - İlk Prototip)

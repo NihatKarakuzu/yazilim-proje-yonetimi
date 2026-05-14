@@ -55,6 +55,10 @@ def _analyze_with_detector(
             raise ValueError("Bu OpenCV sürümünde SURF desteği bulunamadı.")
         distance_limit = 0.75
         matcher_norm = cv2.NORM_L2
+    elif detector_name == "BRISK":
+        detector = cv2.BRISK_create(thresh=30, octaves=3)
+        distance_limit = 50
+        matcher_norm = cv2.NORM_HAMMING
     else:
         raise ValueError("Bilinmeyen algoritma seçimi.")
 
@@ -113,4 +117,12 @@ def analyze_with_surf(
 ) -> FeatureAnalysisResult:
     return _analyze_with_detector(
         image_a_bytes, image_b_bytes, filename_a, filename_b, detector_name="SURF"
+    )
+
+
+def analyze_with_brisk(
+    image_a_bytes: bytes, image_b_bytes: bytes, filename_a: str, filename_b: str
+) -> FeatureAnalysisResult:
+    return _analyze_with_detector(
+        image_a_bytes, image_b_bytes, filename_a, filename_b, detector_name="BRISK"
     )

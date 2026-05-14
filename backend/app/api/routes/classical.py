@@ -31,10 +31,10 @@ def _serialize_result(algorithm: str, result: FeatureAnalysisResult) -> dict:
         "ORB": "Hızlı Tarama",
         "AKAZE": "Detay Analizi",
         "SIFT": "Hassas Karşılaştırma",
-        "SURF": "Hızlandırılmış Analiz (SURF)",
-        "BRISK": "SURF alternatifi (BRISK — standart OpenCV)",
+        "SURF": "Hızlandırılmış analiz (SURF)",
+        "BRISK": "BRISK — ikili görüntü özellik eşlemesi",
     }
-    return {
+    payload = {
         "algorithm_key": algorithm,
         "algorithm": name_map.get(algorithm, algorithm),
         "decision": result.decision,
@@ -47,6 +47,12 @@ def _serialize_result(algorithm: str, result: FeatureAnalysisResult) -> dict:
             "total_matches": result.total_matches,
         },
     }
+    if algorithm == "BRISK":
+        payload["algorithm_note"] = (
+            "SURF ayrı bir yöntemdir ve patent nedeniyle hazır OpenCV tekerleğinde genelde çalışmaz. "
+            "Bu yüzden dördüncü skor BRISK ile üretilir."
+        )
+    return payload
 
 
 @router.post("/analyze/orb")
@@ -152,7 +158,7 @@ def analyze_classical(
     }
     if fourth_key == "BRISK":
         response["summary"]["explanation"] += (
-            " Dördüncü analiz: PyPI OpenCV’de SURF patent nedeniyle kapalı olduğu için BRISK kullanıldı."
+            " Dördüncü sütun: SURF bu ortamda yok (patent); yerine BRISK ölçümü kullanıldı."
         )
     elif fourth_key is None:
         response["summary"]["explanation"] += (

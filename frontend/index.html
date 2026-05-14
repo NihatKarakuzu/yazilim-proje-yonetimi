@@ -571,6 +571,16 @@
             document.getElementById('classicalInput').classList.toggle('hidden', mode !== 'classical');
         }
 
+        function messageFromApiError(data) {
+            if (!data || typeof data !== 'object') return '';
+            const d = data.detail;
+            if (typeof d === 'string') return d;
+            if (Array.isArray(d)) {
+                return d.map((e) => (e && typeof e.msg === 'string' ? e.msg : JSON.stringify(e))).join('\n');
+            }
+            return '';
+        }
+
         async function processAi() {
             const file = document.getElementById('fileInputAi').files[0];
             if (!file) return alert('Lütfen bir görsel seçin.');
@@ -581,10 +591,23 @@
 
             try {
                 const res = await fetch('/api/analyze/ai', { method: 'POST', body: formData });
-                const data = await res.json();
+                let data = null;
+                try {
+                    data = await res.json();
+                } catch (_) {
+                    /* yanıt JSON değil */
+                }
+                if (!res.ok) {
+                    alert(messageFromApiError(data) || `Sunucu hatası (${res.status})`);
+                    return;
+                }
+                if (!data?.ensemble || !Array.isArray(data.models)) {
+                    alert('Sunucu beklenmeyen bir yanıt döndü (analiz gövdesi eksik).');
+                    return;
+                }
                 showResults(data, 'ai');
             } catch (err) {
-                alert('Hata oluştu.');
+                alert('İstek başarısız: ' + (err && err.message ? err.message : 'bilinmeyen hata'));
             } finally {
                 toggleLoading('ai', false);
             }
@@ -602,10 +625,23 @@
 
             try {
                 const res = await fetch('/api/analyze/classical', { method: 'POST', body: formData });
-                const data = await res.json();
+                let data = null;
+                try {
+                    data = await res.json();
+                } catch (_) {
+                    /* yanıt JSON değil */
+                }
+                if (!res.ok) {
+                    alert(messageFromApiError(data) || `Sunucu hatası (${res.status})`);
+                    return;
+                }
+                if (!Array.isArray(data?.results) || !data?.summary) {
+                    alert('Sunucu beklenmeyen bir yanıt döndü (karşılaştırma sonucu eksik).');
+                    return;
+                }
                 showResults(data, 'classical');
             } catch (err) {
-                alert('Hata oluştu.');
+                alert('İstek başarısız: ' + (err && err.message ? err.message : 'bilinmeyen hata'));
             } finally {
                 toggleLoading('classical', false);
             }
@@ -625,10 +661,32 @@
             const modelDetails = document.getElementById('modelDetails');
             const resultTitle = document.getElementById('resultTitle');
 
-            modal.style.display = 'flex';
-
             let fakeProbability = 0;
             let isSuspicious = false;
+
+            if (mode === 'ai') {
+                if (!data?.ensemble || !Array.isArray(data.models)) {
+                    modal.style.display = 'flex';
+                    explanation.innerText = 'Geçerli analiz verisi alınamadı.';
+                    modelDetails.innerHTML = '';
+                    badge.innerText = 'HATA';
+                    badge.className = 'result-badge';
+                    resultTitle.innerText = 'Yanıt eksik';
+                    scoreText.innerText = '—';
+                    return;
+                }
+            } else if (!Array.isArray(data?.results) || data.results.length === 0 || !data?.summary) {
+                modal.style.display = 'flex';
+                explanation.innerText = 'Karşılaştırma sonucu alınamadı.';
+                modelDetails.innerHTML = '';
+                badge.innerText = 'HATA';
+                badge.className = 'result-badge';
+                resultTitle.innerText = 'Yanıt eksik';
+                scoreText.innerText = '—';
+                return;
+            }
+
+            modal.style.display = 'flex';
 
             if (mode === 'ai') {
                 fakeProbability = data.ensemble.fake_probability;
@@ -698,7 +756,17 @@
             try {
                 const res = await fetch('/api/ai/model-status');
                 const data = await res.json();
-                document.getElementById('modelStatus').innerText = data.onnx_model_found ? 'Sistem Aktif (ONNX)' : 'Sistem Aktif (Proxy)';
+                let label = 'Model bilgisi alınamadı';
+                if (data.onnx_model_found) {
+                    label = 'Sistem aktif (ONNX)';
+                } else if (data.simple_cnn_loaded && data.resnet18_loaded) {
+                    label = 'Sistem aktif (PyTorch)';
+                } else if (data.simple_cnn_loaded || data.resnet18_loaded) {
+                    label = 'Kısmi model yüklü (PyTorch)';
+                } else {
+                    label = 'Model dosyası yok (varsayılan skor)';
+                }
+                document.getElementById('modelStatus').innerText = label;
             } catch (err) {}
         }
 

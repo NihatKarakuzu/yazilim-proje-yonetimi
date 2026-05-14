@@ -100,19 +100,29 @@ def analyze_classical(
             reference_bytes, test_bytes, filename_a, filename_b
         )
         sift_result = analyze_with_sift(reference_bytes, test_bytes, filename_a, filename_b)
-        surf_result = analyze_with_surf(reference_bytes, test_bytes, filename_a, filename_b)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    surf_result = None
+    try:
+        surf_result = analyze_with_surf(reference_bytes, test_bytes, filename_a, filename_b)
+    except ValueError:
+        # opencv-contrib olmayan kurulumlarda SURF yok; ORB/AKAZE/SIFT ile devam
+        pass
+
+    serialized = [
+        _serialize_result("ORB", orb_result),
+        _serialize_result("AKAZE", akaze_result),
+        _serialize_result("SIFT", sift_result),
+    ]
+    if surf_result is not None:
+        serialized.append(_serialize_result("SURF", surf_result))
 
     response = {
         "reference_image": filename_a,
         "test_image": filename_b,
-        "results": [
-            _serialize_result("ORB", orb_result),
-            _serialize_result("AKAZE", akaze_result),
-            _serialize_result("SIFT", sift_result),
-            _serialize_result("SURF", surf_result),
-        ],
+        "surf_available": surf_result is not None,
+        "results": serialized,
     }
     suspicious_count = sum(1 for item in response["results"] if item["decision"] == "suspicious")
     response["summary"] = {
@@ -123,6 +133,10 @@ def analyze_classical(
             else "Analiz edilen yöntemlerin çoğu görüntünün orijinal olduğunu doğrulamaktadır."
         ),
     }
+    if surf_result is None:
+        response["summary"]["explanation"] += (
+            " Not: SURF bu OpenCV kurulumunda kullanılamadı; özet ORB, AKAZE ve SIFT ile hesaplandı."
+        )
     response["stored_in_db"] = save_analysis_result(
         analysis_type="classical_multi",
         payload=response,

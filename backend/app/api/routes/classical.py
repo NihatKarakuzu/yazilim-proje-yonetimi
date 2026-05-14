@@ -33,6 +33,7 @@ def _serialize_result(algorithm: str, result: FeatureAnalysisResult) -> dict:
         "SURF": "Hızlandırılmış Analiz (SURF)",
     }
     return {
+        "algorithm_key": algorithm,
         "algorithm": name_map.get(algorithm, algorithm),
         "decision": result.decision,
         "similarity_score": result.similarity_score,

@@ -76,6 +76,8 @@ pip uninstall opencv-python opencv-python-headless opencv-contrib-python opencv-
 pip install -r requirements.txt
 ```
 
+PyPI üzerindeki hazır OpenCV paketlerinde SURF çoğu zaman **patent / non-free** nedeniyle kapalıdır; bu durumda API yine çalışır, özet **ORB + AKAZE + SIFT** ile üretilir ve yanıtta `surf_available: false` döner.
+
 Varsayılan adres: `http://127.0.0.1:8000`  
 Dokümantasyon: `http://127.0.0.1:8000/docs`
 Kullanıcı arayüzü: `http://127.0.0.1:8000/`

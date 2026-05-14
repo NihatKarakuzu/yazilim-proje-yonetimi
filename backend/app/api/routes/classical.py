@@ -107,7 +107,10 @@ def analyze_classical(
     try:
         surf_result = analyze_with_surf(reference_bytes, test_bytes, filename_a, filename_b)
     except ValueError:
-        # opencv-contrib olmayan kurulumlarda SURF yok; ORB/AKAZE/SIFT ile devam
+        # Örn. yetersiz özellik noktası
+        pass
+    except Exception:
+        # cv2.error: patent / non-free kapalı derleme; eksik contrib; vb.
         pass
 
     serialized = [

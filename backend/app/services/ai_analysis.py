@@ -11,6 +11,11 @@ from torchvision import models, transforms
 from PIL import Image
 import io
 
+# Proje kökü (backend/ üstü); uvicorn app.main:app ile çalışırken cwd backend olsa da doğru yol
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+_MODELS_DIR = _REPO_ROOT / "models"
+
+
 @dataclass
 class AiAnalysisResult:
     model: str
@@ -76,7 +81,7 @@ def _load_torch_models():
     # Simple CNN
     try:
         m1 = SimpleCNN()
-        path1 = Path("models") / "simple_cnn.pth"
+        path1 = _MODELS_DIR / "simple_cnn.pth"
         if path1.exists():
             m1.load_state_dict(torch.load(str(path1), map_location=device))
         m1.eval()
@@ -87,7 +92,7 @@ def _load_torch_models():
     # ResNet18
     try:
         m2 = get_resnet_model()
-        path2 = Path("models") / "resnet18_forgery.pth"
+        path2 = _MODELS_DIR / "resnet18_forgery.pth"
         if path2.exists():
             m2.load_state_dict(torch.load(str(path2), map_location=device))
         m2.eval()
@@ -185,8 +190,11 @@ def analyze_ai_models(image_bytes: bytes, filename: str) -> AiAnalysisBundle:
 
 def ai_model_status() -> dict:
     _load_torch_models()
+    onnx_path = _MODELS_DIR / "deepfake_detector.onnx"
     return {
         "simple_cnn_loaded": MODELS["simple_cnn"] is not None,
         "resnet18_loaded": MODELS["resnet18"] is not None,
+        "onnx_model_found": onnx_path.is_file(),
+        "models_dir": str(_MODELS_DIR),
         "active_mode": "torch-comparative",
     }

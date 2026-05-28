@@ -1,11 +1,11 @@
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
-from app.services.analysis_store import save_analysis_result
 from app.services.classical_analysis import (
     FeatureAnalysisResult,
     analyze_with_akaze,
     analyze_with_orb,
     analyze_with_sift,
+    analyze_with_surf,
 )
 
 
@@ -29,8 +29,10 @@ def _serialize_result(algorithm: str, result: FeatureAnalysisResult) -> dict:
         "ORB": "Hızlı Tarama",
         "AKAZE": "Detay Analizi",
         "SIFT": "Hassas Karşılaştırma",
+        "SURF": "Hızlandırılmış analiz (SURF)",
     }
-    return {
+    payload = {
+        "algorithm_key": algorithm,
         "algorithm": name_map.get(algorithm, algorithm),
         "decision": result.decision,
         "similarity_score": result.similarity_score,
@@ -42,6 +44,7 @@ def _serialize_result(algorithm: str, result: FeatureAnalysisResult) -> dict:
             "total_matches": result.total_matches,
         },
     }
+    return payload
 
 
 @router.post("/analyze/orb")
@@ -66,14 +69,6 @@ def analyze_orb(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     response = _serialize_result("ORB", result)
-    response["stored_in_db"] = save_analysis_result(
-        analysis_type="orb",
-        payload=response,
-        input_filename=test_image.filename,
-        reference_filename=reference_image.filename,
-        decision=result.decision,
-        score=result.similarity_score,
-    )
     return response
 
 
@@ -100,14 +95,33 @@ def analyze_classical(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    surf_result = None
+    try:
+        surf_result = analyze_with_surf(reference_bytes, test_bytes, filename_a, filename_b)
+    except (ValueError, Exception):
+        pass
+
+    fourth_result = None
+    fourth_key: str | None = None
+    if surf_result is not None:
+        fourth_result = surf_result
+        fourth_key = "SURF"
+
+    serialized = [
+        _serialize_result("ORB", orb_result),
+        _serialize_result("AKAZE", akaze_result),
+        _serialize_result("SIFT", sift_result),
+    ]
+    if fourth_result is not None:
+        serialized.append(_serialize_result(fourth_key, fourth_result))
+
     response = {
         "reference_image": filename_a,
         "test_image": filename_b,
-        "results": [
-            _serialize_result("ORB", orb_result),
-            _serialize_result("AKAZE", akaze_result),
-            _serialize_result("SIFT", sift_result),
-        ],
+        "surf_native": fourth_key == "SURF",
+        "fourth_detector": fourth_key,
+        "surf_available": fourth_key == "SURF",
+        "results": serialized,
     }
     suspicious_count = sum(1 for item in response["results"] if item["decision"] == "suspicious")
     response["summary"] = {
@@ -118,20 +132,8 @@ def analyze_classical(
             else "Analiz edilen yöntemlerin çoğu görüntünün orijinal olduğunu doğrulamaktadır."
         ),
     }
-    response["stored_in_db"] = save_analysis_result(
-        analysis_type="classical_multi",
-        payload=response,
-        input_filename=filename_b,
-        reference_filename=filename_a,
-        decision=response["summary"]["decision"],
-        score=round(
-            (
-                response["results"][0]["similarity_score"]
-                + response["results"][1]["similarity_score"]
-                + response["results"][2]["similarity_score"]
-            )
-            / 3.0,
-            4,
-        ),
-    )
+    if fourth_key is None:
+        response["summary"]["explanation"] += (
+            " Dördüncü yöntem (SURF) bu görseller için hesaplanamadı veya sistemde bulunamadı."
+        )
     return response

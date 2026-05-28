@@ -138,12 +138,8 @@
         /* Main Content Grid */
         .main-grid {
             display: grid;
-            grid-template-columns: 1fr 350px;
+            grid-template-columns: 1fr;
             gap: 30px;
-        }
-
-        @media (max-width: 1024px) {
-            .main-grid { grid-template-columns: 1fr; }
         }
 
         /* Action Panel */
@@ -243,13 +239,6 @@
             box-shadow: 0 10px 25px var(--primary-glow);
         }
 
-        /* Stats & History Sidebar */
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-        }
-
         .stat-card {
             background: rgba(255, 255, 255, 0.03);
             border-radius: 20px;
@@ -287,34 +276,79 @@
             backdrop-filter: blur(20px);
             z-index: 1000;
             display: none;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
-            padding: 20px;
+            padding: 12px 10px 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .results-modal {
-            max-width: 800px;
+            position: relative;
+            max-width: min(720px, 100%);
             width: 100%;
+            max-height: min(92vh, 860px);
+            margin: 8px auto 24px;
             background: var(--bg-card);
             border: 1px solid var(--border-glow);
-            border-radius: 32px;
-            padding: 40px;
-            position: relative;
+            border-radius: 24px;
+            padding: 0;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .results-modal-scroll {
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 48px 22px 22px;
+            flex: 1;
+            min-height: 0;
+            max-height: min(88vh, 820px);
         }
 
         .close-btn {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            background: transparent;
-            border: none;
-            color: var(--text-dim);
+            top: 10px;
+            right: 10px;
+            z-index: 5;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid var(--border-glow);
+            color: var(--text-main);
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: rgba(99, 102, 241, 0.25);
+            color: #fff;
+        }
+
+        .result-header h3 {
+            font-size: clamp(1.15rem, 4vw, 1.65rem);
+            line-height: 1.25;
         }
 
         .result-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 16px;
+        }
+
+        #resultExplanation {
+            text-align: center;
+            color: var(--text-dim);
+            margin-bottom: 16px;
+            max-height: 24vh;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            line-height: 1.45;
+            padding: 0 4px;
         }
 
         .result-badge {
@@ -332,9 +366,9 @@
         .badge-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
 
         .progress-circle {
-            width: 150px;
-            height: 150px;
-            margin: 0 auto 30px;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
             position: relative;
         }
 
@@ -357,22 +391,35 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 1.65rem;
             font-weight: 800;
         }
 
         .model-list {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-top: 18px;
+            max-height: min(42vh, 320px);
+            overflow-y: auto;
+            padding-bottom: 4px;
         }
 
         .model-item {
             background: rgba(0,0,0,0.2);
-            padding: 15px;
-            border-radius: 16px;
+            padding: 12px 10px;
+            border-radius: 14px;
             text-align: center;
+        }
+
+        .algo-note {
+            font-size: 0.68rem;
+            color: var(--text-dim);
+            line-height: 1.35;
+            margin-top: 8px;
+            text-align: left;
+            text-transform: none;
+            letter-spacing: 0;
         }
 
         /* History Table */
@@ -498,34 +545,6 @@
                     </button>
                 </div>
             </div>
-
-            <div class="sidebar">
-                <div class="glass-card" style="padding: 30px;">
-                    <div class="panel-title" style="margin-bottom: 20px;">
-                        <i data-lucide="activity"></i> Performans
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div class="stat-card">
-                            <div class="stat-label">Doğruluk</div>
-                            <div class="stat-val">98.4%</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Hız</div>
-                            <div class="stat-val">~240ms</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-card" style="padding: 30px;">
-                    <div class="panel-title" style="margin-bottom: 20px;">
-                        <i data-lucide="history"></i> Geçmiş Sonuçlar
-                    </div>
-                    <div id="historyList" style="max-height: 400px; overflow-y: auto;">
-                        <!-- Geçmiş buraya gelecek -->
-                        <div class="stat-label" style="text-align: center; padding: 20px;">Henüz analiz yapılmadı.</div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <section class="glass-card" style="margin-top: 40px;">
@@ -533,18 +552,25 @@
                 <i data-lucide="database"></i> Eğitim Detayları ve Model Verileri
             </div>
             <p style="color: var(--text-dim); margin-bottom: 30px;">
-                Sistemimiz 60.000 Gerçek ve 60.000 Sahte (toplam 120k) görselden oluşan geniş bir veri kümesiyle eğitilmiştir. 
-                Eğitim çıktıları, metrikler ve görselleştirme raporları sisteme entegre edilmiştir.
+                Derin öğrenme modelleri, <strong style="color: var(--text-main);">28.000 gerçek</strong> ve
+                <strong style="color: var(--text-main);">26.000 sahte</strong> görselden oluşan toplam
+                <strong style="color: var(--text-main);">54.000</strong> örnek üzerinde eğitilmiştir.
+                Metrikler ve eğitim çıktıları bu arayüz üzerinden özetlenmektedir.
             </p>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+                <div class="stat-card" style="border-color: var(--accent);">
+                    <div class="stat-label">Eğitim veri seti</div>
+                    <div class="stat-val" style="font-size: 1.4rem; color: #fff;">54k</div>
+                    <div class="stat-label" style="margin-top: 8px;">28.000 gerçek · 26.000 sahte görsel</div>
+                </div>
                 <div class="stat-card">
-                    <div class="stat-label">Model A (SimpleCNN)</div>
-                    <div class="stat-val" style="font-size: 1.1rem; color: #fff;">Base Architecture</div>
-                    <div class="stat-label" style="margin-top: 5px;">Hızlı önizleme ve temel analiz</div>
+                    <div class="stat-label">Model A — SimpleCNN</div>
+                    <div class="stat-val" style="font-size: 1.1rem; color: #fff;">Temel mimari</div>
+                    <div class="stat-label" style="margin-top: 5px;">Hızlı önizleme ve temel sınıflandırma</div>
                 </div>
                 <div class="stat-card" style="border-color: var(--primary);">
-                    <div class="stat-label">Model B (ResNet18)</div>
-                    <div class="stat-val" style="font-size: 1.1rem; color: #fff;">Modern Transfer Learning</div>
+                    <div class="stat-label">Model B — ResNet18</div>
+                    <div class="stat-val" style="font-size: 1.1rem; color: #fff;">Transfer learning</div>
                     <div class="stat-label" style="margin-top: 5px;">Yüksek hassasiyetli derin analiz</div>
                 </div>
             </div>
@@ -552,14 +578,15 @@
     </div>
 
     <!-- Results Modal -->
-    <div class="results-overlay" id="resultsModal">
-        <div class="results-modal animate-fade-in">
-            <button class="close-btn" onclick="closeResults()">
+    <div class="results-overlay" id="resultsModal" onclick="if (event.target === this) closeResults()">
+        <div class="results-modal animate-fade-in" onclick="event.stopPropagation()">
+            <button type="button" class="close-btn" onclick="closeResults()" aria-label="Kapat">
                 <i data-lucide="x"></i>
             </button>
+            <div class="results-modal-scroll">
             <div class="result-header">
                 <div id="resultBadge" class="result-badge">BELİRSİZ</div>
-                <h3 id="resultTitle" style="font-size: 1.8rem;">Analiz Sonucu</h3>
+                <h3 id="resultTitle">Analiz Sonucu</h3>
             </div>
 
             <div class="progress-circle">
@@ -570,12 +597,13 @@
                 <div class="progress-text" id="resultScore">0%</div>
             </div>
 
-            <div id="resultExplanation" style="text-align: center; color: var(--text-dim); margin-bottom: 30px;">
+            <div id="resultExplanation">
                 Analiz detayları burada yer alacak.
             </div>
 
             <div class="model-list" id="modelDetails">
                 <!-- Modeller buraya gelecek -->
+            </div>
             </div>
         </div>
     </div>
@@ -603,6 +631,16 @@
             document.getElementById('classicalInput').classList.toggle('hidden', mode !== 'classical');
         }
 
+        function messageFromApiError(data) {
+            if (!data || typeof data !== 'object') return '';
+            const d = data.detail;
+            if (typeof d === 'string') return d;
+            if (Array.isArray(d)) {
+                return d.map((e) => (e && typeof e.msg === 'string' ? e.msg : JSON.stringify(e))).join('\n');
+            }
+            return '';
+        }
+
         async function processAi() {
             const file = document.getElementById('fileInputAi').files[0];
             if (!file) return alert('Lütfen bir görsel seçin.');
@@ -613,10 +651,23 @@
 
             try {
                 const res = await fetch('/api/analyze/ai', { method: 'POST', body: formData });
-                const data = await res.json();
+                let data = null;
+                try {
+                    data = await res.json();
+                } catch (_) {
+                    /* yanıt JSON değil */
+                }
+                if (!res.ok) {
+                    alert(messageFromApiError(data) || `Sunucu hatası (${res.status})`);
+                    return;
+                }
+                if (!data?.ensemble || !Array.isArray(data.models)) {
+                    alert('Sunucu beklenmeyen bir yanıt döndü (analiz gövdesi eksik).');
+                    return;
+                }
                 showResults(data, 'ai');
             } catch (err) {
-                alert('Hata oluştu.');
+                alert('İstek başarısız: ' + (err && err.message ? err.message : 'bilinmeyen hata'));
             } finally {
                 toggleLoading('ai', false);
             }
@@ -634,10 +685,23 @@
 
             try {
                 const res = await fetch('/api/analyze/classical', { method: 'POST', body: formData });
-                const data = await res.json();
+                let data = null;
+                try {
+                    data = await res.json();
+                } catch (_) {
+                    /* yanıt JSON değil */
+                }
+                if (!res.ok) {
+                    alert(messageFromApiError(data) || `Sunucu hatası (${res.status})`);
+                    return;
+                }
+                if (!Array.isArray(data?.results) || !data?.summary) {
+                    alert('Sunucu beklenmeyen bir yanıt döndü (karşılaştırma sonucu eksik).');
+                    return;
+                }
                 showResults(data, 'classical');
             } catch (err) {
-                alert('Hata oluştu.');
+                alert('İstek başarısız: ' + (err && err.message ? err.message : 'bilinmeyen hata'));
             } finally {
                 toggleLoading('classical', false);
             }
@@ -657,10 +721,32 @@
             const modelDetails = document.getElementById('modelDetails');
             const resultTitle = document.getElementById('resultTitle');
 
-            modal.style.display = 'flex';
-
             let fakeProbability = 0;
             let isSuspicious = false;
+
+            if (mode === 'ai') {
+                if (!data?.ensemble || !Array.isArray(data.models)) {
+                    modal.style.display = 'flex';
+                    explanation.innerText = 'Geçerli analiz verisi alınamadı.';
+                    modelDetails.innerHTML = '';
+                    badge.innerText = 'HATA';
+                    badge.className = 'result-badge';
+                    resultTitle.innerText = 'Yanıt eksik';
+                    scoreText.innerText = '—';
+                    return;
+                }
+            } else if (!Array.isArray(data?.results) || data.results.length === 0 || !data?.summary) {
+                modal.style.display = 'flex';
+                explanation.innerText = 'Karşılaştırma sonucu alınamadı.';
+                modelDetails.innerHTML = '';
+                badge.innerText = 'HATA';
+                badge.className = 'result-badge';
+                resultTitle.innerText = 'Yanıt eksik';
+                scoreText.innerText = '—';
+                return;
+            }
+
+            modal.style.display = 'flex';
 
             if (mode === 'ai') {
                 fakeProbability = data.ensemble.fake_probability;
@@ -689,20 +775,37 @@
                 fakeProbability = 1.0 - avgSimilarity;
                 isSuspicious = data.summary.decision === 'suspicious';
                 explanation.innerText = data.summary.explanation;
-                
-                modelDetails.innerHTML = data.results.map(r => {
+
+                let classicalCards = data.results.map(r => {
                     const rSuspicious = r.decision === 'suspicious';
                     const displayProb = rSuspicious ? Math.round((1 - r.similarity_score) * 100) : Math.round(r.similarity_score * 100);
                     const label = rSuspicious ? 'Farklılık' : 'Benzerlik';
+                    const key = r.algorithm_key || '';
+                    const title = r.algorithm || 'Algoritma';
+                    const note = r.algorithm_note ? String(r.algorithm_note).replace(/</g, '') : '';
+                    const titleBlock = `<div style="font-weight:700;color:#fff;font-size:0.95rem;line-height:1.25;">${key ? `${key} — ` : ''}${title}</div>`;
 
                     return `
                         <div class="model-item" style="border: 1px solid ${rSuspicious ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'};">
-                            <div class="stat-label" style="font-weight: 600; color: #fff; margin-bottom: 8px;">${r.algorithm}</div>
-                            <div class="stat-val" style="font-size: 1.5rem; color: ${rSuspicious ? 'var(--danger)' : 'var(--success)'}">${displayProb}%</div>
-                            <div class="stat-label" style="font-size: 0.75rem; margin-top: 4px;">${label} Tespit Edildi</div>
+                            ${titleBlock}
+                            ${note ? `<div class="algo-note">${note}</div>` : ''}
+                            <div class="stat-val" style="font-size: 1.35rem; color: ${rSuspicious ? 'var(--danger)' : 'var(--success)'}">${displayProb}%</div>
+                            <div class="stat-label" style="font-size: 0.72rem; margin-top: 4px;">${label} Tespit Edildi</div>
                         </div>
                     `;
                 }).join('');
+
+                if (data.results.length < 4) {
+                    classicalCards += `
+                        <div class="model-item" style="opacity: 0.75; border: 1px dashed rgba(148, 163, 184, 0.45);">
+                            <div style="font-weight: 700; color: #cbd5e1; margin-bottom: 4px; font-size: 1rem;">SURF</div>
+                            <div class="stat-val" style="font-size: 1.1rem; color: #94a3b8;">Bu görsel çifti için hesaplanamadı</div>
+                            <div class="stat-label" style="font-size: 0.72rem; margin-top: 6px; text-transform: none; letter-spacing: 0;">
+                                Genelde yetersiz özellik noktası veya sistemde kütüphane eksikliği.
+                            </div>
+                        </div>`;
+                }
+                modelDetails.innerHTML = classicalCards;
             }
 
             const displayScore = isSuspicious ? Math.round(fakeProbability * 100) : Math.round((1 - fakeProbability) * 100);
@@ -716,45 +819,10 @@
             const offset = 282.7 - (282.7 * displayScore) / 100;
             progressBar.style.strokeDashoffset = offset;
             progressBar.style.stroke = isSuspicious ? 'var(--danger)' : 'var(--success)';
-
-            loadHistory();
         }
 
         function closeResults() {
             document.getElementById('resultsModal').style.display = 'none';
-        }
-
-        async function loadHistory() {
-            try {
-                const res = await fetch('/api/analysis/history?limit=10');
-                const data = await res.json();
-                const container = document.getElementById('historyList');
-
-                if (!data.items || data.items.length === 0) return;
-
-                container.innerHTML = `
-                    <table class="history-table">
-                        <thead>
-                            <tr>
-                                <th>Tür</th>
-                                <th>Sonuç</th>
-                                <th>Skor</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.items.map(item => `
-                                <tr>
-                                    <td>${item.analysis_type.toUpperCase()}</td>
-                                    <td style="color: ${item.decision === 'suspicious' ? 'var(--danger)' : 'var(--success)'}">
-                                        ${item.decision === 'suspicious' ? 'Şüpheli' : 'Güvenli'}
-                                    </td>
-                                    <td>${item.score ? Math.round(item.score * 100) + '%' : '-'}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-            } catch (err) {}
         }
 
         // Initial model status check
@@ -762,12 +830,21 @@
             try {
                 const res = await fetch('/api/ai/model-status');
                 const data = await res.json();
-                document.getElementById('modelStatus').innerText = data.onnx_model_found ? 'Sistem Aktif (ONNX)' : 'Sistem Aktif (Proxy)';
+                let label = 'Model bilgisi alınamadı';
+                if (data.onnx_model_found) {
+                    label = 'Sistem aktif (ONNX)';
+                } else if (data.simple_cnn_loaded && data.resnet18_loaded) {
+                    label = 'Sistem aktif (PyTorch)';
+                } else if (data.simple_cnn_loaded || data.resnet18_loaded) {
+                    label = 'Kısmi model yüklü (PyTorch)';
+                } else {
+                    label = 'Model dosyası yok (varsayılan skor)';
+                }
+                document.getElementById('modelStatus').innerText = label;
             } catch (err) {}
         }
 
         checkStatus();
-        loadHistory();
     </script>
 </body>
 </html>

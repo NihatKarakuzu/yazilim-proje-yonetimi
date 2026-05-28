@@ -1,6 +1,5 @@
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
-from app.services.analysis_store import save_analysis_result
 from app.services.ai_analysis import ai_model_status, analyze_ai_models
 
 
@@ -69,11 +68,4 @@ def analyze_ai(image: UploadFile = File(...)) -> dict:
             for item in bundle.model_results
         ],
     }
-    response["stored_in_db"] = save_analysis_result(
-        analysis_type="ai",
-        payload=response,
-        input_filename=image.filename,
-        decision=bundle.ensemble_decision,
-        score=bundle.ensemble_probability,
-    )
     return response

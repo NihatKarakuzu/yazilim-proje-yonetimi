@@ -25,7 +25,6 @@ Sistem, yüklenen görseller için karşılaştırma/tespit sonuçlarını üret
 - **Backend:** Python + FastAPI
 - **Görüntü İşleme:** OpenCV
 - **Yapay Zeka:** PyTorch (veya TensorFlow)
-- **Veritabanı (opsiyonel ama önerilir):** PostgreSQL
 - **Sürüm Kontrol:** Git + GitHub
 
 ## Ekip
@@ -69,22 +68,19 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+**SURF ve OpenCV:** SURF, `opencv-python` tekerleğinde yoktur; depo `opencv-contrib-python-headless` kullanır. Daha önce normal OpenCV kurduysanız çakışmayı kaldırıp yeniden kurun:
+
+```bash
+pip uninstall opencv-python opencv-python-headless opencv-contrib-python opencv-contrib-python-headless -y
+pip install -r requirements.txt
+```
+
+PyPI üzerindeki hazır OpenCV paketlerinde SURF bazen kapalı olabilir veya patent nedeniyle bulunmayabilir. Sisteminizde bulunmadığı durumlarda dördüncü skor üretilemez.
+
 Varsayılan adres: `http://127.0.0.1:8000`  
 Dokümantasyon: `http://127.0.0.1:8000/docs`
 Kullanıcı arayüzü: `http://127.0.0.1:8000/`
-
-### PostgreSQL Bağlantısı (Opsiyonel ama önerilir)
-
-Analiz sonuçlarının veritabanına kaydedilmesi için `DATABASE_URL` değişkeni tanımlanır.
-
-Windows PowerShell örneği:
-
-```powershell
-$env:DATABASE_URL="postgresql://postgres:PAROLA@localhost:5432/yazilim_proje"
-py -m uvicorn app.main:app --reload
-```
-
-`DATABASE_URL` yoksa API çalışmaya devam eder, sadece veritabanı kaydı yapılmaz.
+Kullanıcı arayüzü: `http://127.0.0.1:8000/`
 
 ## Klasik Analiz (2. Aşama)
 
@@ -95,7 +91,7 @@ Bu aşamada klasik algoritmalar genişletildi:
   - `test_image`: analiz edilecek görsel
 
 - `POST /api/analyze/classical`
-  - ORB + AKAZE + SIFT sonuçlarını tek yanıtta döner
+  - ORB + AKAZE + SIFT + SURF sonuçlarını tek yanıtta döner; `fourth_detector` alanı hangi yöntemin kullanıldığını belirtir
   - her algoritma için karar (`authentic_like` veya `suspicious`) ve metrik üretir
 
 ## AI Analiz (3. Aşama - İlk Prototip)
@@ -136,8 +132,4 @@ python train/train_cnn.py --data-dir ../dataset/train --epochs 8
 - `models/deepfake_detector.onnx`
 
 ONNX dosyası üretildiğinde API bunu otomatik algılar ve gerçek model moduna geçer.
-
-## Sonuç Geçmişi
-
-- `GET /api/analysis/history?limit=20`
-  - Veritabanına kaydedilmiş son analiz sonuçlarını listeler.
+ONNX dosyası üretildiğinde API bunu otomatik algılar ve gerçek model moduna geçer.

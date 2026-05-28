@@ -3,6 +3,34 @@ from dataclasses import dataclass
 import cv2
 import numpy as np
 
+class MahotasSURF:
+    def __init__(self, hessianThreshold=400):
+        self.threshold = 0.1
+
+    def detectAndCompute(self, image, mask=None):
+        try:
+            import mahotas.features.surf
+        except ImportError:
+            raise ValueError("SURF algoritması için 'mahotas' kütüphanesi eksik. 'pip install mahotas' çalıştırın.")
+
+        points = mahotas.features.surf.surf(image, threshold=self.threshold, max_points=2000)
+        
+        if points is None or len(points) == 0:
+            return [], None
+            
+        keypoints = []
+        descriptors = []
+        
+        for p in points:
+            y, x, scale, score, laplacian, angle = p[:6]
+            desc = p[6:]
+            kp = cv2.KeyPoint(x=float(x), y=float(y), size=float(scale), angle=float(angle), response=float(score))
+            keypoints.append(kp)
+            descriptors.append(desc)
+            
+        descriptors = np.array(descriptors, dtype=np.float32)
+        return keypoints, descriptors
+
 
 @dataclass
 class FeatureAnalysisResult:
@@ -45,6 +73,10 @@ def _analyze_with_detector(
             raise ValueError("Bu OpenCV sürümünde SIFT desteği bulunamadı.")
         detector = cv2.SIFT_create(nfeatures=1200)
         distance_limit = 250
+        matcher_norm = cv2.NORM_L2
+    elif detector_name == "SURF":
+        detector = MahotasSURF(hessianThreshold=400)
+        distance_limit = 0.15
         matcher_norm = cv2.NORM_L2
     else:
         raise ValueError("Bilinmeyen algoritma seçimi.")
@@ -96,4 +128,12 @@ def analyze_with_sift(
 ) -> FeatureAnalysisResult:
     return _analyze_with_detector(
         image_a_bytes, image_b_bytes, filename_a, filename_b, detector_name="SIFT"
+    )
+
+
+def analyze_with_surf(
+    image_a_bytes: bytes, image_b_bytes: bytes, filename_a: str, filename_b: str
+) -> FeatureAnalysisResult:
+    return _analyze_with_detector(
+        image_a_bytes, image_b_bytes, filename_a, filename_b, detector_name="SURF"
     )
